@@ -159,4 +159,117 @@ class ArrayUtilTest extends PHPUnit_Framework_TestCase
 			$cutByWhitelist
 		);
 	}
+
+	public function testBlackListSimpleCase()
+	{
+		$map = array(
+			'string' => array(
+				2 => true
+			)
+		);
+
+		$array = array(
+			array(
+				2 => array(
+					'expected'
+				)
+			),
+			'string' => array(
+				'expected',
+				2 => 'unexpected'
+			)
+		);
+
+		$cut = \Mufuphlex\Util\ArrayUtil::cutByBlacklist($array, $map);
+
+		$this->assertEquals(
+			array(
+				array(
+					2 => array(
+						'expected'
+					)
+				),
+				'string' => array(
+					'expected'
+				)
+			),
+			$cut
+		);
+	}
+
+	public function testBlackListRegexCase()
+	{
+		$map = array(
+			'protocol' => array(
+				'/https?/' => true
+			)
+		);
+
+		$array = array(
+			'not protocol' => array(
+				'http' => 'expected',
+				'https' => 'expected too',
+				'ftp' => 'expected as well'
+			),
+			'protocol' => array(
+				'http' => 'unexpected',
+				'https' => 'unexpected too',
+				'ftp' => 'expected'
+			),
+		);
+
+		$cut = \Mufuphlex\Util\ArrayUtil::cutByBlacklist($array, $map);
+
+		$this->assertEquals(
+			array(
+				'not protocol' => array(
+					'http' => 'expected',
+					'https' => 'expected too',
+					'ftp' => 'expected as well'
+				),
+				'protocol' => array(
+					'ftp' => 'expected'
+				)
+			),
+			$cut
+		);
+	}
+
+	public function testBlacklistClosureCase()
+	{
+		$map = array(
+			'/^\d+$/' => array(
+				1 => function($arg){return $arg+5;}
+			)
+		);
+
+		$array = array(
+			'string' => 'expected',
+			array(
+				1,
+				2
+			),
+			array(
+				3,
+				4
+			)
+		);
+
+		$cut = \Mufuphlex\Util\ArrayUtil::cutByBlacklist($array, $map);
+
+		$this->assertEquals(
+			array(
+				'string' => 'expected',
+				array(
+					1,
+					7
+				),
+				array(
+					3,
+					9
+				)
+			),
+			$cut
+		);
+	}
 }

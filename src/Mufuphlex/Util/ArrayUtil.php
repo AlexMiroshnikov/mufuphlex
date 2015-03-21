@@ -96,11 +96,11 @@ class ArrayUtil
 					{
 						if (is_array($map[$mapKey]))
 						{
-							$array[$key] = self::cutByBlacklist($value, $mapKeys[$mapKey]);
+							$array[$key] = self::cutByBlacklist($value, $map[$mapKey]);
 						}
 						elseif ($map[$mapKey] instanceof \Closure)
 						{
-							$array[$key] = $mapKeys[$mapKey]($value);
+							$array[$key] = $map[$mapKey]($value);
 						}
 						else
 						{
