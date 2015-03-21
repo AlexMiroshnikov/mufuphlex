@@ -21,9 +21,9 @@ class ArrayUtil
 			{
 				if (is_array($map[$key]) AND is_array($value))
 				{
-					$array[$key] = self::_cutByWhitelist($value, $map[$key]);
+					$array[$key] = self::cutByWhitelist($value, $map[$key]);
 				}
-				elseif ($map[$key] instanceof Closure)
+				elseif ($map[$key] instanceof \Closure)
 				{
 					$array[$key] = $map[$key]($value);
 				}
@@ -39,7 +39,11 @@ class ArrayUtil
 					{
 						if (is_array($map[$mapKey]))
 						{
-							$array[$key] = self::_cutByWhitelist($value, $map[$mapKey]);
+							$array[$key] = self::cutByWhitelist($value, $map[$mapKey]);
+						}
+						elseif ($map[$mapKey] instanceof \Closure)
+						{
+							$array[$key] = $map[$mapKey]($value);
 						}
 						$unset = false;
 						break;
@@ -50,6 +54,66 @@ class ArrayUtil
 				{
 					unset($array[$key]);
 				}
+			}
+		}
+
+		return $array;
+	}
+
+	/**
+	 * @param array $array
+	 * @param array $map
+	 * @return array
+	 */
+	public static function cutByBlacklist(array &$array, array $map)
+	{
+		$mapKeys = array_keys($map);
+
+		foreach ($array as $key => $value)
+		{
+			$unset = false;
+
+			if (isset($map[$key]))
+			{
+				if (is_array($map[$key]))
+				{
+					$array[$key] = self::cutByBlacklist($value, $map[$key]);
+				}
+				elseif ($map[$key] instanceof \Closure)
+				{
+					$array[$key] = $map[$key]($value);
+				}
+				else
+				{
+					$unset = true;
+				}
+			}
+			else
+			{
+				foreach ($mapKeys as $mapKey)
+				{
+					if (preg_match('@^/.+/[siu]*$@', $mapKey) AND preg_match($mapKey, $key))
+					{
+						if (is_array($map[$mapKey]))
+						{
+							$array[$key] = self::cutByBlacklist($value, $mapKeys[$mapKey]);
+						}
+						elseif ($map[$mapKey] instanceof \Closure)
+						{
+							$array[$key] = $mapKeys[$mapKey]($value);
+						}
+						else
+						{
+							$unset = true;
+						}
+						break;
+					}
+				}
+			}
+
+			if ($unset)
+			{
+				unset($array[$key]);
 			}
 		}
 

@@ -15,7 +15,7 @@
   },
   "autoload": {
     "psr-4": {
-      "Mufuphlex\\Util\\ArrayUtil": ""
+      "Mufuphlex\\Util\\ArrayUtil\\": ""
     }
   },
   "require-dev": {

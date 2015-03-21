@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__.'/../ArrayUtil.php';
+
 class ArrayUtilTest extends PHPUnit_Framework_TestCase
 {
 	public function testWhitelistSimpleCase()
@@ -132,6 +134,29 @@ class ArrayUtilTest extends PHPUnit_Framework_TestCase
 			0 => array(
 				'/\d+/' => function($arg){return $arg*2+1;}
 			)
+		);
+
+		$array = array(
+			array(
+				0,
+				1,
+				2,
+				'internal string key' => 'unexpected internal content'
+			),
+			'string key' => 'unexpected content'
+		);
+
+		$cutByWhitelist = \Mufuphlex\Util\ArrayUtil::cutByWhitelist($array, $map);
+
+		$this->assertEquals(
+			array(
+				array(
+					1,
+					3,
+					5
+				)
+			),
+			$cutByWhitelist
 		);
 	}
 }
