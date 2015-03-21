@@ -58,6 +58,72 @@ class ArrayUtilTest extends PHPUnit_Framework_TestCase
 				)
 			)
 		);
+
+		$array = array(
+			'one another' => array(
+				1 => array(
+					'low level' => 'unexpected due to regex'
+				),
+				'not numeric' => array(
+					'low level' => 'unexpected due to not numeric',
+				),
+				2 => array(
+					'low level' => 'unexpected due to regex as well',
+				),
+			),
+			'one' => array(
+				3 => array(
+					'the first low level' => 'unexpected due to key',
+					'low level' => 'low level in one - 1'
+				),
+				'not numeric' => array(
+					'low level' => 'unexpected due to not numeric',
+					'another low level' => 'unexpected in one'
+				),
+				4 => array(
+					'low level' => 'low level in one - 2',
+					'the second low level' => 'unexpected due to key',
+				)
+			),
+			'another' => array(
+				5 => array(
+					'the first low level' => 'unexpected due to key',
+					'low level' => 'low level in another - 1'
+				),
+				'not numeric' => array(
+					'low level' => 'unexpected due to not numeric',
+					'another low level' => 'unexpected in another'
+				),
+				6 => array(
+					'low level' => 'low level in another - 2',
+					'the second low level' => 'unexpected due to key',
+				)
+			)
+		);
+
+		$cutByWhitelist = \Mufuphlex\Util\ArrayUtil::cutByWhitelist($array, $map);
+
+		$this->assertEquals(
+			array(
+				'one' => array(
+					3 => array(
+						'low level' => 'low level in one - 1'
+					),
+					4 => array(
+						'low level' => 'low level in one - 2'
+					)
+				),
+				'another' => array(
+					5 => array(
+						'low level' => 'low level in another - 1'
+					),
+					6 => array(
+						'low level' => 'low level in another - 2'
+					)
+				)
+			),
+			$cutByWhitelist
+		);
 	}
 
 	public function testWhitelistClosureCase()
