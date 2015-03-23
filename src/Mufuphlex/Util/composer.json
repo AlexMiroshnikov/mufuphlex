@@ -1,9 +1,17 @@
 {
   "name": "mufuphlex/util",
   "type": "library",
-  "version": "0.1",
+  "version": "1.0",
   "description": "Utils from Multi functional PHP library",
-  "minimum-stability": "dev",
+  "keywords": [
+    "util",
+    "array",
+    "array util",
+    "array walk",
+    "array map",
+    "array cut"
+  ],
+  "minimum-stability": "stable",
   "license": "MIT",
   "authors": [
     {

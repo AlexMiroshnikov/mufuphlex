@@ -3,7 +3,7 @@
   "type": "library",
   "version": "0.1",
   "description": "Multi functional PHP library by Ilex",
-  "minimum-stability": "dev",
+  "minimum-stability": "stable",
   "license": "MIT",
   "authors": [
     {
