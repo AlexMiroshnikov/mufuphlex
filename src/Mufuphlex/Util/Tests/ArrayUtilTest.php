@@ -126,6 +126,7 @@ class ArrayUtilTest extends PHPUnit_Framework_TestCase
 			),
 			$cutByWhitelist
 		);
+
 	}
 
 	public function testWhitelistClosureCase()
@@ -155,6 +156,24 @@ class ArrayUtilTest extends PHPUnit_Framework_TestCase
 					3,
 					5
 				)
+			),
+			$cutByWhitelist
+		);
+
+		$map = array(
+			0 => function($arg){return $arg+2;}
+		);
+
+		$array = array(
+			'not numeric' => 1,
+			0 => 2
+		);
+
+		$cutByWhitelist = \Mufuphlex\Util\ArrayUtil::cutByWhitelist($array, $map);
+
+		$this->assertEquals(
+			array(
+				0 => 4
 			),
 			$cutByWhitelist
 		);
@@ -268,6 +287,25 @@ class ArrayUtilTest extends PHPUnit_Framework_TestCase
 					3,
 					9
 				)
+			),
+			$cut
+		);
+
+		$map = array(
+			'/^\d+$/' => function($arg){return $arg+2;},
+			'not numeric' => true
+		);
+
+		$array = array(
+			'not numeric' => 1,
+			0 => 2
+		);
+
+		$cut = \Mufuphlex\Util\ArrayUtil::cutByBlacklist($array, $map);
+
+		$this->assertEquals(
+			array(
+				0 => 4
 			),
 			$cut
 		);
