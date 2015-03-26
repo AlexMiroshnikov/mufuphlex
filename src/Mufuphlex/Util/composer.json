@@ -23,6 +23,7 @@
   },
   "autoload": {
     "psr-4": {
+      "Mufuphlex\\Util\\": "./",
       "Mufuphlex\\Util\\ArrayUtil\\": ""
     }
   },
