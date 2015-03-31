@@ -18,7 +18,7 @@
   },
   "autoload":{
     "psr-4":{
-      "Mufuphlex\\":"src/"
+      "Mufuphlex\\":"src/Mufuphlex/"
     }
   }
 }
