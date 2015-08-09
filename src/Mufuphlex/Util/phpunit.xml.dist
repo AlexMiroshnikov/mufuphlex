@@ -13,6 +13,9 @@
 		<testsuite name="Mufuphlex Array Util Test Suite">
 			<directory>Tests</directory>
 		</testsuite>
+        <testsuite name="Mufuphlex Redis Util Test Suite">
+            <directory>Tests</directory>
+        </testsuite>
 	</testsuites>
 	<logging>
 		<log type="tap" target="build/report.tap"/>

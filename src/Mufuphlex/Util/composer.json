@@ -1,7 +1,7 @@
 {
   "name": "mufuphlex/util",
   "type": "library",
-  "version": "1.0",
+  "version": "1.01",
   "description": "Utils from Multi functional PHP library",
   "keywords": [
     "util",
@@ -9,7 +9,11 @@
     "array util",
     "array walk",
     "array map",
-    "array cut"
+    "array cut",
+    "redis",
+    "redis util",
+    "redis sugar",
+    "redis shortcut"
   ],
   "minimum-stability": "stable",
   "license": "MIT",
@@ -24,7 +28,8 @@
   "autoload": {
     "psr-4": {
       "Mufuphlex\\Util\\": "./",
-      "Mufuphlex\\Util\\ArrayUtil\\": ""
+      "Mufuphlex\\Util\\ArrayUtil\\": "",
+      "Mufuphlex\\Util\\RedisUtil\\": ""
     }
   },
   "require-dev": {
