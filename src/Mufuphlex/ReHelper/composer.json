@@ -1,0 +1,31 @@
+{
+  "name": "mufuphlex/rehelper",
+  "type": "library",
+  "version": "0.1",
+  "description": "Redis helper from Multi functional PHP library",
+  "keywords": [
+    "redis",
+    "redis util",
+    "redis hash",
+    "redis set"
+  ],
+  "minimum-stability": "stable",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "AlexMiroshnikov"
+    }
+  ],
+  "require": {
+    "php" : ">=5.3.9",
+    "mufuphlex/util" : ">=1.01"
+  },
+  "autoload": {
+    "psr-4": {
+      "Mufuphlex\\ReHelper\\": "./"
+    }
+  },
+  "require-dev": {
+    "phpunit/phpunit" : ">=4.5"
+  }
+}
