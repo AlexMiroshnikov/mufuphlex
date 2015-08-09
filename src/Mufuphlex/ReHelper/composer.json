@@ -18,7 +18,7 @@
   ],
   "require": {
     "php" : ">=5.3.9",
-    "mufuphlex/util" : ">=1.01"
+    "mufuphlex/mufuphlex" : "dev-master"
   },
   "autoload": {
     "psr-4": {
