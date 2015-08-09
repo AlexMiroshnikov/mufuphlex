@@ -181,7 +181,7 @@ class Searcher extends Interactor
 			}
 
 			$keys = array_unique($keys);
-			echo "\nType '".$type."': \n";var_dump($keys);echo "\n";
+			//echo "\nType '".$type."': \n";var_dump($keys);echo "\n";
 
 			if ($intersection = $this->_redisInteractor->getRedisUtil()->setIntersect($keys))
 			{
