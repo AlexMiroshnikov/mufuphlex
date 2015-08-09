@@ -28,12 +28,12 @@ class Indexer extends Interactor
 
 		foreach ($obj->getTokens() as $token)
 		{
-			$dataBySet[$this->_redisInteractor->makeKeyName($token, $this->_redisInteractor->getPrefixToken(), $type)][] = $id;
+			$dataBySet[$this->_makeKeyNameToken($token, $type)][] = $id;
 		}
 
 		foreach ($dataBySet as $key => $values)
 		{
-			$cnt += $this->_redisInteractor->getRedisUtil()->setAddMulti($key, $values);
+			$cnt += $this->_addMulti($key, $values);
 			unset($dataBySet[$key]);
 		}
 
@@ -71,7 +71,7 @@ class Indexer extends Interactor
 	 */
 	protected function _fillTokensOfEntry(InteractableInterface $entry)
 	{
-		$keyName = $this->_redisInteractor->makeKeyName($entry->getId(), $this->_redisInteractor->getPrefixEntry(), $entry->getType());
+		$keyName = $this->_makeKeyNameEntry($entry);
 
 		if ($entry->isMutable())
 		{
@@ -79,7 +79,7 @@ class Indexer extends Interactor
 			$this->_redisInteractor->getRedisUtil()->del($keyName);
 		}
 
-		return $this->_redisInteractor->getRedisUtil()->setAddMulti($keyName, $entry->getTokens());
+		return $this->_addMulti($keyName, $entry->getTokens());
 	}
 
 	/**
@@ -90,12 +90,12 @@ class Indexer extends Interactor
 	{
 		$type = $entry->getType();
 		$id = $entry->getId();
-		$keyName = $this->_redisInteractor->makeKeyName($id, $this->_redisInteractor->getPrefixEntry(), $type);
+		$keyName = $this->_makeKeyNameEntry($entry);
 		$currentTokens = $this->_redisInteractor->getRedisUtil()->setGet($keyName);
 
 		foreach ($currentTokens as $token)
 		{
-			$tokenKeyName = $this->_redisInteractor->makeKeyName($token, $this->_redisInteractor->getPrefixToken(), $type);
+			$tokenKeyName = $this->_makeKeyNameToken($token, $type);
 			$this->_redisInteractor->getRedisUtil()->setRemoveValue($tokenKeyName, $id);
 		}
 

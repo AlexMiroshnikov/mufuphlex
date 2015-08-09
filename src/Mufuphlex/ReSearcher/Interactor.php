@@ -27,4 +27,25 @@ abstract class Interactor
 	{
 		return $this->_redisInteractor->makeKeyName($token, $this->_redisInteractor->getPrefixToken(), $type);
 	}
+
+	/**
+	 * @param InteractableInterface $entry
+	 * @param string $type
+	 * @return string
+	 */
+	protected function _makeKeyNameEntry(InteractableInterface $entry)
+	{
+		return $this->_redisInteractor->makeKeyName($entry->getId(), $this->_redisInteractor->getPrefixEntry(), $entry->getType());
+	}
+
+	/**
+	 * setAddMulti() wrapper
+	 * @param string $keyName
+	 * @param array $values
+	 * @return int
+	 */
+	protected function _addMulti($keyName, $values)
+	{
+		return $this->_redisInteractor->getRedisUtil()->setAddMulti($keyName, $values);
+	}
 }
