@@ -1,7 +1,7 @@
 {
   "name": "mufuphlex/mufuphlex",
   "type": "library",
-  "version": "0.1",
+  "version": "1.0.2",
   "description": "Multi functional PHP library by Ilex",
   "minimum-stability": "stable",
   "license": "MIT",
