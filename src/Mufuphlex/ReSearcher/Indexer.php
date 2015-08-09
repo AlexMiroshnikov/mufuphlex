@@ -7,6 +7,9 @@ namespace Mufuphlex\ReSearcher;
  */
 class Indexer extends Interactor
 {
+	/** @var callable */
+	protected $_filter = null;
+
 	/**
 	 * @param InteractableInterface $obj
 	 * @return int
@@ -28,6 +31,11 @@ class Indexer extends Interactor
 
 		foreach ($obj->getTokens() as $token)
 		{
+			if ($this->_filter AND !call_user_func_array($this->_filter, array($token)))
+			{
+				continue;
+			}
+
 			$dataBySet[$this->_makeKeyNameToken($token, $type)][] = $id;
 		}
 
@@ -38,6 +46,16 @@ class Indexer extends Interactor
 		}
 
 		return $cnt;
+	}
+
+	/**
+	 * @param callable $filter
+	 * @return $this
+	 */
+	public function setFilter(\Closure $filter)
+	{
+		$this->_filter = $filter;
+		return $this;
 	}
 
 	/**

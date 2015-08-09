@@ -2,14 +2,23 @@
 $ts = microtime(true);
 require_once './bootstrap.php';
 
+$redisInteractor->getRedisUtil()->flushDb();
+
 $indexer = new \Mufuphlex\ReSearcher\Indexer($redisInteractor);
+$indexer->setFilter(function($token){
+	if ($token == 'http' OR $token == 'https' OR $token == 'www')
+	{
+		return false;
+	}
+	return true;
+});
 
 $ads = array(
 	array(
 		'id' => 1,
 		'title' => 'This is a text title',
 		'description' => 'And this is a description',
-		'url' => 'https://github.com',
+		'url' => 'https://www.github.com',
 		'phrases' => array(
 			array(
 				'id' => 1,
