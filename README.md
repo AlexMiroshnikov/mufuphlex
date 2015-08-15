@@ -14,5 +14,5 @@ Here are the most useful items:
   <li><h4><a href="https://github.com/AlexMiroshnikov/mufuphlex/wiki/RedisUtil">RedisUtil</a></h4></li>
   </ul>
 </li>
-<li><h3>ReSearcher</h3></li>
+<li><h3><a href="https://github.com/AlexMiroshnikov/mufuphlex/wiki/ReSearcher">ReSearcher</a></h3></li>
 </ul>
