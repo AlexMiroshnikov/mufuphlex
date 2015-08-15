@@ -16,6 +16,9 @@ class SearcherResult
 	/** @var \Object */
 	protected $_object = null;
 
+	/** @var bool */
+	protected $_exactMatch = false;
+
 	/**
 	 * @return array
 	 */
@@ -67,6 +70,24 @@ class SearcherResult
 	public function setObject($object)
 	{
 		$this->_object = $object;
+		return $this;
+	}
+
+	/**
+	 * @return boolean
+	 */
+	public function hasExactMatch()
+	{
+		return $this->_exactMatch;
+	}
+
+	/**
+	 * @param boolean $exactMatch
+	 * @return $this
+	 */
+	public function setExactMatch($exactMatch)
+	{
+		$this->_exactMatch = $exactMatch;
 		return $this;
 	}
 }
