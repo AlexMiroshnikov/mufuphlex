@@ -18,8 +18,10 @@ class SearcherTest extends PHPUnit_Framework_TestCase
 
 		$this->_indexer = new \Mufuphlex\ReSearcher\Indexer($redisInteractor);
 		$this->_searcher = new \Mufuphlex\ReSearcher\Searcher($redisInteractor);
+		//$this->_searcher->setVerbose(true);
 	}
 
+	//*
 	public function testProximitySorting()
 	{
 		$str1 = 'long võ sự kiện tặng thuốc tăng lực quà tặng trị giá 10tr vnđ lên cấp 9x chỉ trong 2 ngày tham gia ngay longvo vn';
@@ -60,4 +62,83 @@ class SearcherTest extends PHPUnit_Framework_TestCase
 			$this->assertEquals($str, implode(' ', $result[($i-1)]->getTokens()));
 		}
 	}
+	//*/
+
+	//*
+	public function testExactMatch()
+	{
+		$func = __FUNCTION__;
+		$baseStr1 = 'big red '.$func;
+		$baseStr2 = 'big '.$func;
+
+		$items = array(
+			$baseStr1,
+			$baseStr2
+		);
+
+		foreach ($items as $i => $item)
+		{
+			$dummy = new \Mufuphlex\ReSearcher\InteractableObject\Dummy(array('id' => ($i+1)));
+			$dummy->setTokens(explode(' ', $item));
+			$this->_indexer->addObject($dummy);
+		}
+
+		$type = 'dummy type';
+
+		$settings = new \Mufuphlex\ReSearcher\SearcherResultSettings(array(
+			'type' => $type,
+			'resultClass' => '\Mufuphlex\ReSearcher\InteractableObject\Dummy'
+		));
+
+		$result = $this->_searcher->search($baseStr2, array($settings));
+		$result = $result[$type];
+		$this->assertCount(2, $result);
+
+		$result = $this->_searcher->search('"'.$baseStr2.'"', array($settings));
+		$result = $result[$type];
+		$this->assertCount(1, $result);
+		$this->assertEquals(2, $result[0]->getObject()->id);
+	}
+	//*/
+
+	//*
+	public function testExactMatchFalseNegative()
+	{
+		$str1 = 'cây hương thảo rosemary bonsai cực thơm đuổi muỗi giảm stress tốt trí nhớ và là gia vị cực ngon https www facebook com cayhuongthaorosemarygiare';
+		$str2 = 'quà 8 3 cây hương thảo rosemary quà tặng bất ngờ cho 8 3 cây bonsai vừa đẹp vừa thơm tốt sức khoẻ https www facebook com notes c c3 a2y h c6 b0 c6 a1ng th e1 ba a3o rosemary c c3 a2y h c6 b0 c6 a1ng th e1 ba a3o rosemary bonsai c e1 bb b1c th c6 a1m c4 91u e1 bb 95i mu e1 bb 97i gi e1 ba a3m stress l c3 a0m gia v e1 bb 8b 487909521317155';
+
+		$items = array(
+			$str1,
+			$str2
+		);
+
+		foreach ($items as $i => $item)
+		{
+			$dummy = new \Mufuphlex\ReSearcher\InteractableObject\Dummy(array('id' => ($i+1)));
+			$dummy->setTokens(explode(' ', $item));
+			$this->_indexer->addObject($dummy);
+		}
+
+		$type = 'dummy type';
+
+		$result = $this->_searcher->search('"rosemary bonsai"', array(
+			new \Mufuphlex\ReSearcher\SearcherResultSettings(array(
+				'type' => $type,
+				'resultClass' => '\Mufuphlex\ReSearcher\InteractableObject\Dummy',
+				'sortByProximity' => true
+			))
+		));
+
+		$result = $result[$type];
+
+		$this->assertCount(2, $result);
+
+		for ($i=1; $i<=2; $i++)
+		{
+			$str = ${'str'.$i};
+			$this->assertEquals($i, $result[($i-1)]->getObject()->id);
+			$this->assertEquals($str, implode(' ', $result[($i-1)]->getTokens()));
+		}
+	}
+	//*/
 }

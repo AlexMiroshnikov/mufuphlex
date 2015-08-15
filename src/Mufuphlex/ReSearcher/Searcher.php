@@ -7,7 +7,14 @@ namespace Mufuphlex\ReSearcher;
  */
 class Searcher extends Interactor
 {
+	const DEFAULT_SCORE = 1.0;
 	const PROXIMITY_WEIGHT = 1;
+
+	/** @var string */
+	protected $_str = '';
+
+	/** @var bool */
+	protected $_isExact = false;
 
 	/** @var TokenizerInterface  */
 	protected $_tokenizer = null;
@@ -23,6 +30,9 @@ class Searcher extends Interactor
 
 	/** @var int */
 	protected $_count = 0;
+
+	/** @var bool */
+	protected $_verbose = false;
 
 	/**
 	 * @param RedisInteractor $redisInteractor
@@ -41,9 +51,12 @@ class Searcher extends Interactor
 	 */
 	public function search($str, array $searcherResultSettings = array())
 	{
-		$this->_reset();
+		if ($this->_verbose) { echo "\nSearch for |".$str."|"; }
 
-		if (!$this->_tokens = $this->_tokenizer->tokenize($str))
+		$this->_reset();
+		$this->_setStr($str);
+
+		if (!$this->_tokens = $this->_tokenizer->tokenize($this->_str))
 		{
 			return null;
 		}
@@ -56,7 +69,6 @@ class Searcher extends Interactor
 
 		foreach ($this->_result as $type => $results)
 		{
-			$this->_count += count($results);
 			$typedResults[$type] = $this->_createTypedResults($searcherResultSettings[$type], $results);
 
 			if ($searcherResultSettings[$type]->needsSortByProximity())
@@ -67,8 +79,11 @@ class Searcher extends Interactor
 					return 0;
 				});
 			}
+
+			$this->_count += count($typedResults[$type]);
 		}
 
+		$this->_result = $typedResults;
 		return $typedResults;
 	}
 
@@ -89,6 +104,16 @@ class Searcher extends Interactor
 	public function getResultCountByType($type)
 	{
 		return (($this->_result AND isset($this->_result[$type])) ? count($this->_result[$type]) : 0);
+	}
+
+	/**
+	 * @param bool $val
+	 * @return $this
+	 */
+	public function setVerbose($val = false)
+	{
+		$this->_verbose = (bool)$val;
+		return $this;
 	}
 
 	/**
@@ -125,6 +150,8 @@ class Searcher extends Interactor
 	 */
 	protected function _reset()
 	{
+		$this->_str = '';
+		$this->_isExact = false;
 		$this->_result = null;
 		$this->_count = 0;
 		$this->_tokens = array();
@@ -179,11 +206,18 @@ class Searcher extends Interactor
 		);
 
 		$type = $searcherResultSettings->getType();
-		$needSort = $searcherResultSettings->needsSortByProximity();
+		$needSort = $searcherResultSettings->needsSortByProximity() || $this->_isExact;
 
 		foreach ($objects as $object)
 		{
-			$typedResults[] = $this->_createTypedResult($object, $type, $needSort);
+			$typedResult = $this->_createTypedResult($object, $type, $needSort);
+
+			if (!$typedResult)
+			{
+				continue;
+			}
+
+			$typedResults[] = $typedResult;
 		}
 
 		return $typedResults;
@@ -205,24 +239,35 @@ class Searcher extends Interactor
 
 		if ($needSort)
 		{
-			$score = $this->_calcScore($tokens);
-			$typedResult->setScore($score);
+			$this->_setScore($typedResult, $tokens);
+
+			if ($this->_isExact AND !$typedResult->hasExactMatch())
+			{
+				if ($this->_verbose) { echo "\n\trelegate ".$object->id.' ('.$typedResult->getScore().')'; }
+				return null;
+			}
 		}
 
 		return $typedResult;
 	}
 
 	/**
+	 * @param SearcherResult $searcherResult
 	 * @param array $tokens
 	 * @return float
 	 */
-	protected function _calcScore(array $tokens)
+	protected function _setScore(SearcherResult $searcherResult, array $tokens)
 	{
-		$score = 1.0;
+		$score = self::DEFAULT_SCORE;
+		$exactCounter = 1;
+		$curScore = $score;
+
+		if ($this->_verbose) { echo "\n\tsearch tokens cnt ".$this->_tokensCount; }
 
 		if (($tokensCnt = count($tokens)) > 1)
 		{
 			$positions = array_intersect($tokens, $this->_tokens);
+			if ($this->_verbose) { echo "\npositions: ";var_dump($positions); echo "\n"; }
 			$positions = array_keys($positions);
 
 			foreach ($positions as $i => $val)
@@ -232,14 +277,40 @@ class Searcher extends Interactor
 					break;
 				}
 
-				if ($tokens[$positions[$i+1]] == $tokens[$val])
+				if (($tokens[$positions[$i + 1]] == $tokens[$val]) OR ($exactCounter == $this->_tokensCount))
 				{
 					$score -= 1/$tokensCnt;
 				}
 				else
 				{
-					$score += ($positions[$i + 1] - $val - 1);
+					$curScore = $positions[$i + 1] - $val;
+					$score += ($curScore - 1);
 				}
+
+				if ($exactCounter < $this->_tokensCount)
+				{
+					if ($curScore <= self::DEFAULT_SCORE)
+					{
+						$exactCounter++;
+					}
+					else
+					{
+						$exactCounter = 1;
+					}
+					if ($this->_verbose) { echo "\n\t\tset EC ".$exactCounter; }
+				}
+			}
+		}
+
+		if ($this->_verbose) { echo "\n\tclean score: ".$score; }
+
+		if ($exactCounter == $this->_tokensCount)
+		{
+			$searcherResult->setExactMatch(true);
+
+			if ($score > self::DEFAULT_SCORE)
+			{
+				$score = self::DEFAULT_SCORE;
 			}
 		}
 
@@ -249,6 +320,29 @@ class Searcher extends Interactor
 			$score += self::PROXIMITY_WEIGHT*(1 - $this->_tokensCount / $tokensCnt);
 		}
 
+		$searcherResult->setScore($score);
+		if ($this->_verbose) { echo "\n\tfinal score: ".$score; }
 		return $score;
+	}
+
+	/**
+	 * @param string $str
+	 * @return void
+	 */
+	protected function _setStr($str)
+	{
+		if (!is_string($str))
+		{
+			throw new \InvalidArgumentException('$str must be a string, '.gettype($str).' given');
+		}
+
+		$this->_str = trim($str, " \t\r\n");
+
+		if (preg_match('/^"[^"]+"$/su', $this->_str))
+		{
+			$this->_isExact = true;
+		}
+
+		$this->_str = trim($this->_str, '"');
 	}
 }
