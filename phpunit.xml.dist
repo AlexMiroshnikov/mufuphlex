@@ -13,6 +13,15 @@
 		<testsuite name="Mufuphlex Test Suite">
 			<directory>src/Mufuphlex/Tests</directory>
 		</testsuite>
+		<testsuite name="Mufuphlex Util Test Suite">
+			<directory>src/Mufuphlex/Util/Tests</directory>
+		</testsuite>
+		<testsuite name="Mufuphlex ReHelper Test Suite">
+			<directory>src/Mufuphlex/ReHelper/Tests</directory>
+		</testsuite>
+		<testsuite name="Mufuphlex ReSearcher Test Suite">
+			<directory>src/Mufuphlex/ReSearcher/Tests</directory>
+		</testsuite>
 	</testsuites>
 	<filter>
 		<whitelist>
