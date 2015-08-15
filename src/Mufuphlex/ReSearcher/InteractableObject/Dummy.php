@@ -40,9 +40,16 @@ class Dummy extends \Mufuphlex\ReSearcher\InteractableObject
 	 */
 	public static function createResults(array $resultsIds)
 	{
+		$results = array();
+
 		foreach ($resultsIds as $id)
 		{
-			return array('result' => 'dummy result', 'id' => $id);
+			$obj = new \stdClass();
+			$obj->result = 'dummy result '.$id;
+			$obj->id = (int)$id;
+			$results[] = $obj;
 		}
+
+		return $results;
 	}
 }
