@@ -111,4 +111,15 @@ class RedisUtilTest extends PHPUnit_Framework_TestCase
 		$this->_redisUtil->del($key);
 		$this->assertEquals(array(), $this->_redisUtil->setGet($key));
 	}
+
+	public function testHashSetAndGet()
+	{
+		$key = __FUNCTION__;
+		$data = array(
+			'key 1' => 'val 1',
+			'key 2' => 'val 2'
+		);
+		$this->_redisUtil->hashSet($key, $data);
+		$this->assertEquals($data, $this->_redisUtil->hashGet($key));
+	}
 }

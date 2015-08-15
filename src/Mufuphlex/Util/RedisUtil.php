@@ -31,6 +31,25 @@ class RedisUtil
 		}
 	}
 
+	/**
+	 * @param string $hash
+	 * @param array $data
+	 * @return int
+	 */
+	public function hashSet($hash, array $data)
+	{
+		return $this->_redis->hMset($hash, $data);
+	}
+
+	/**
+	 * @param string $hash
+	 * @return array $data
+	 */
+	public function hashGet($hash)
+	{
+		return $this->_redis->hGetAll($hash);
+	}
+
 /**
 	 * @param string $hash
 	 * @param string $key
