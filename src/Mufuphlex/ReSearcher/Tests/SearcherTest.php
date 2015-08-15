@@ -1,40 +1,61 @@
 <?php
 class SearcherTest extends PHPUnit_Framework_TestCase
 {
+	/** @var \Mufuphlex\ReSearcher\RedisInteractor */
+	private $_redisInteractor = null;
+
 	/** @var \Mufuphlex\ReSearcher\Indexer */
 	private $_indexer = null;
 
 	/** @var \Mufuphlex\ReSearcher\Searcher */
 	private $_searcher = null;
 
+	private $_proximitySets = array(
+		//*
+		'tặng trị' => array(
+			'long võ sự kiện tặng thuốc tăng lực quà tặng trị giá 10tr vnđ lên cấp 9x chỉ trong 2 ngày tham gia ngay longvo vn',
+			'webgame cao cấp tu tiên chi lộ cực hot 2015 game tặng code trị giá lên tới 1 triệu vnd vào chơi ngay nhận hàng nóng tutienchilo com landingpage ba ntk2',
+			'3g wifi thiết bị phát wifi từ sim 3g 3g wifi bộ phát wifi 3g tốc độ 21 6 43 2 lte tặng sim 3g trị giá 300k vnwifi net 3g phat wifi wifi 3g usb 3g phat wifi aspx'
+		)/**/,
+		'"hot girl"' => array(
+			'thử độ hot girl cùng đo bạn hot tới đâu click ngay cpvm vn',
+			'chơi game hot cùng hot girl chơi game vơ i hot girl trang anna qua thi ch mê tham gia ngay thitien vn landing',
+			'chơi game hot cùng hot girl ngay cùng hot girl trang anna hóa thân tiên nữ nơi tiên giới kì ảo xem ngay thitien vn landing'
+		)
+		//*/
+	);
+
 	public function setUp()
 	{
-		$redisInteractor = new \Mufuphlex\ReSearcher\RedisInteractor(array(
+		$this->_redisInteractor = new \Mufuphlex\ReSearcher\RedisInteractor(array(
 			'db' => 2,
 			'namespace' => 'Testing:'
 		));
 
-		$redisInteractor->getRedisUtil()->flushDb();
+		$this->_redisInteractor->getRedisUtil()->flushDb();
 
-		$this->_indexer = new \Mufuphlex\ReSearcher\Indexer($redisInteractor);
-		$this->_searcher = new \Mufuphlex\ReSearcher\Searcher($redisInteractor);
+		$this->_indexer = new \Mufuphlex\ReSearcher\Indexer($this->_redisInteractor);
+		$this->_searcher = new \Mufuphlex\ReSearcher\Searcher($this->_redisInteractor);
 		//$this->_searcher->setVerbose(true);
 	}
 
 	//*
 	public function testProximitySorting()
 	{
-		$str1 = 'long võ sự kiện tặng thuốc tăng lực quà tặng trị giá 10tr vnđ lên cấp 9x chỉ trong 2 ngày tham gia ngay longvo vn';
-		$str2 = 'webgame cao cấp tu tiên chi lộ cực hot 2015 game tặng code trị giá lên tới 1 triệu vnd vào chơi ngay nhận hàng nóng tutienchilo com landingpage ba ntk2';
-		$str3 = '3g wifi thiết bị phát wifi từ sim 3g 3g wifi bộ phát wifi 3g tốc độ 21 6 43 2 lte tặng sim 3g trị giá 300k vnwifi net 3g phat wifi wifi 3g usb 3g phat wifi aspx';
+		$i = 0;
+		foreach ($this->_proximitySets as $str => $set)
+		{
+			echo "\nProximity set ".$i++."\n";
+			$this->_testProximitySorting($str, $set);
+		}
+	}
+	//*/
 
-		$items = array(
-			$str1,
-			$str2,
-			$str3
-		);
+	public function _testProximitySorting($str, $set)
+	{
+		$this->_redisInteractor->getRedisUtil()->flushDb();
 
-		foreach ($items as $i => $item)
+		foreach ($set as $i => $item)
 		{
 			$dummy = new \Mufuphlex\ReSearcher\InteractableObject\Dummy(array('id' => ($i+1)));
 			$dummy->setTokens(explode(' ', $item));
@@ -43,7 +64,7 @@ class SearcherTest extends PHPUnit_Framework_TestCase
 
 		$type = 'dummy type';
 
-		$result = $this->_searcher->search('tặng trị', array(
+		$result = $this->_searcher->search($str, array(
 			new \Mufuphlex\ReSearcher\SearcherResultSettings(array(
 				'type' => $type,
 				'resultClass' => '\Mufuphlex\ReSearcher\InteractableObject\Dummy',
@@ -53,16 +74,15 @@ class SearcherTest extends PHPUnit_Framework_TestCase
 
 		$result = $result[$type];
 
-		$this->assertCount(3, $result);
+		$setCnt = count($set);
+		$this->assertCount($setCnt, $result);
 
-		for ($i=1; $i<=3; $i++)
+		for ($i=1; $i<=$setCnt; $i++)
 		{
-			$str = ${'str'.$i};
 			$this->assertEquals($i, $result[($i-1)]->getObject()->id);
-			$this->assertEquals($str, implode(' ', $result[($i-1)]->getTokens()));
+			$this->assertEquals($set[$i-1], implode(' ', $result[($i-1)]->getTokens()));
 		}
 	}
-	//*/
 
 	//*
 	public function testExactMatch()

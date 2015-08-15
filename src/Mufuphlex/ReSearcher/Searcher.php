@@ -277,7 +277,7 @@ class Searcher extends Interactor
 					break;
 				}
 
-				if (($tokens[$positions[$i + 1]] == $tokens[$val]) OR ($exactCounter == $this->_tokensCount))
+				if (($tokens[$positions[$i + 1]] == $tokens[$val]) AND ($exactCounter != $this->_tokensCount))
 				{
 					$score -= 1/$tokensCnt;
 				}
