@@ -21,6 +21,6 @@ class TokenizerVnTest extends PHPUnit_Framework_TestCase
 		$this->assertEquals(array('siêu', 'thị', 'intimex', 'bờ', 'hồ', 'hà', 'nội'), $this->_tokenizer->tokenize($str));
 
 		$str = 'xaba xaba';
-		$this->assertEquals(array('xaba'), $this->_tokenizer->tokenize($str));
+		$this->assertEquals(array('xaba', 'xaba'), $this->_tokenizer->tokenize($str));
 	}
 }

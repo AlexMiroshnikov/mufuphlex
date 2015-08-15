@@ -27,7 +27,6 @@ class TokenizerVn implements TokenizerInterface
 			}
 		}
 
-		$tokens = array_unique($tokens);
 		return $tokens;
 	}
 }
