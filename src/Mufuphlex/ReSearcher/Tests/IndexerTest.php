@@ -19,7 +19,7 @@ class IndexerTest extends PHPUnit_Framework_TestCase
 	public function testAddObjectNotEmpty()
 	{
 		$object = new \Mufuphlex\ReSearcher\InteractableObject\Dummy(array('id' => 'Not Empty'));
-		$this->assertEquals(3, $this->_indexer->addObject($object));
+		$this->assertEquals(4, $this->_indexer->addObject($object));
 	}
 
 	public function testAddObjectEmpty()

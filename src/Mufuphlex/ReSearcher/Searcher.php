@@ -7,8 +7,16 @@ namespace Mufuphlex\ReSearcher;
  */
 class Searcher extends Interactor
 {
+	const PROXIMITY_WEIGHT = 1;
+
 	/** @var TokenizerInterface  */
 	protected $_tokenizer = null;
+
+	/** @var array */
+	protected $_tokens = array();
+
+	/** @var int */
+	protected $_tokensCount = 0;
 
 	/** @var array */
 	protected $_result = array();
@@ -35,61 +43,33 @@ class Searcher extends Interactor
 	{
 		$this->_reset();
 
-		if (!$tokens = $this->_tokenizer->tokenize($str))
+		if (!$this->_tokens = $this->_tokenizer->tokenize($str))
 		{
 			return null;
 		}
 
+		$this->_tokensCount = count($this->_tokens);
+
 		$searcherResultSettings = $this->_prepareSearcherResultSettings($searcherResultSettings);
-		$this->_result = $this->_search($tokens, $searcherResultSettings);
+		$this->_result = $this->_search($this->_tokens, $searcherResultSettings);
 		$typedResults = array();
 
 		foreach ($this->_result as $type => $results)
 		{
 			$this->_count += count($results);
-			$typedResults[$type] = call_user_func_array(
-				array($searcherResultSettings[$type]->getResultClass(), 'createResults'),
-				array($results)
-			);
+			$typedResults[$type] = $this->_createTypedResults($searcherResultSettings[$type], $results);
+
+			if ($searcherResultSettings[$type]->needsSortByProximity())
+			{
+				usort($typedResults[$type], function($a, $b){
+					if ($a->getScore() > $b->getScore()) return 1;
+					if ($a->getScore() < $b->getScore()) return -1;
+					return 0;
+				});
+			}
 		}
 
 		return $typedResults;
-
-		/*
-		$ttlCnt = 0;
-
-		foreach ($result as $type => $results)
-		{
-			$cnt = count($results);
-			echo "\n\t".$cnt." ".$type;
-
-			$ttlCnt += $cnt;
-			$resultTokens = array();
-
-			if ($searchResultSettings[$type]->needsSortByProximity())
-			{
-				$result[$type] = $this->_sortByProximity($tokens, $results, $type, $resultTokens);
-			}
-
-			if ($limit = $searchResultSettings[$type]->getLimit())
-			{
-				$result[$type] = array_slice($result[$type], 0, $limit);
-			}
-
-			if ($resultTokens)
-			{
-				foreach ($result[$type] as $id)
-				{
-					echo "\n\t\t".implode(' ', $resultTokens[$id]);
-				}
-			}
-
-			$createdResult = call_user_func_array(array($searchResultSettings[$type]->getResultClass(), 'createResults'), array($result[$type]));
-			echo "\nCreated result:\n";var_dump($createdResult);
-			//break;
-		}
-		echo "\nSearch result cnt:\t".$ttlCnt;
-		//*/
 	}
 
 	/**
@@ -157,6 +137,8 @@ class Searcher extends Interactor
 	{
 		$this->_result = array();
 		$this->_count = 0;
+		$this->_tokens = array();
+		$this->_tokensCount = 0;
 	}
 
 	/**
@@ -169,6 +151,7 @@ class Searcher extends Interactor
 		/** @var \Mufuphlex\ReSearcher\SearcherResultSettings $setting */
 		$setting = null;
 		$result = array();
+		$tokens = array_unique($tokens);
 
 		foreach ($searchResultSettings as $setting)
 		{
@@ -181,7 +164,6 @@ class Searcher extends Interactor
 			}
 
 			$keys = array_unique($keys);
-			//echo "\nType '".$type."': \n";var_dump($keys);echo "\n";
 
 			if ($intersection = $this->_redisInteractor->getRedisUtil()->setIntersect($keys))
 			{
@@ -190,5 +172,93 @@ class Searcher extends Interactor
 		}
 
 		return $result;
+	}
+
+	/**
+	 * @param SearcherResultSettings $searcherResultSettings
+	 * @param array $results
+	 * @return array
+	 */
+	protected function _createTypedResults(SearcherResultSettings $searcherResultSettings, array $results)
+	{
+		$typedResults = array();
+
+		$objects = call_user_func_array(
+			array($searcherResultSettings->getResultClass(), 'createResults'),
+			array($results)
+		);
+
+		$type = $searcherResultSettings->getType();
+		$needSort = $searcherResultSettings->needsSortByProximity();
+
+		foreach ($objects as $object)
+		{
+			$typedResults[] = $this->_createTypedResult($object, $type, $needSort);
+		}
+
+		return $typedResults;
+	}
+
+	/**
+	 * @param \Object $object
+	 * @param string $type
+	 * @param bool $needSort
+	 * @return SearcherResult
+	 */
+	protected function _createTypedResult($object, $type, $needSort)
+	{
+		$typedResult = new SearcherResult();
+		$typedResult->setObject($object);
+		$keyName = $this->_redisInteractor->makeKeyName($object->id, $this->_redisInteractor->getPrefixEntry(), $type);
+		$tokens = $this->_redisInteractor->getRedisUtil()->hashGet($keyName);
+		$typedResult->setTokens($tokens);
+
+		if ($needSort)
+		{
+			$score = $this->_calcScore($tokens);
+			$typedResult->setScore($score);
+		}
+
+		return $typedResult;
+	}
+
+	/**
+	 * @param array $tokens
+	 * @return float
+	 */
+	protected function _calcScore(array $tokens)
+	{
+		$score = 1.0;
+
+		if (($tokensCnt = count($tokens)) > 1)
+		{
+			$positions = array_intersect($tokens, $this->_tokens);
+			$positions = array_keys($positions);
+
+			foreach ($positions as $i => $val)
+			{
+				if (!isset($positions[$i+1]))
+				{
+					break;
+				}
+
+				if ($tokens[$positions[$i+1]] == $tokens[$val])
+				{
+					$score -= 1/$tokensCnt;
+				}
+				else
+				{
+					$score += ($positions[$i + 1] - $val - 1);
+				}
+			}
+		}
+
+		if ($this->_tokensCount != $tokensCnt)
+		{
+
+			$score += self::PROXIMITY_WEIGHT*(1 - $this->_tokensCount / $tokensCnt);
+		}
+
+		return $score;
 	}
 }

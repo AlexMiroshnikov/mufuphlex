@@ -18,6 +18,11 @@ interface InteractableInterface
 	public function getTokens();
 
 	/**
+	 * @return array
+	 */
+	public function getTokensUnique();
+
+	/**
 	 * @return string
 	 */
 	public function getType();

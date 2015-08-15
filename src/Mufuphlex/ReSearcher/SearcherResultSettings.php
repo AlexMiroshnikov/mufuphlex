@@ -10,8 +10,8 @@ class SearcherResultSettings
 	/** @var string */
 	protected $_type = self::DEFAULT_TYPE;
 
-	/** @var int */
-	protected $_weight = 1;
+	/** @var float */
+	protected $_weight = 1.0;
 
 	/** @var string */
 	//protected $_resultClass = '\Mufuphlex\RePhull\IndexableObject';

@@ -29,7 +29,7 @@ class Indexer extends Interactor
 		$id = $obj->getId();
 		$type = $obj->getType();
 
-		foreach ($obj->getTokens() as $token)
+		foreach ($obj->getTokensUnique() as $token)
 		{
 			if ($this->_filter AND !call_user_func_array($this->_filter, array($token)))
 			{
@@ -65,12 +65,7 @@ class Indexer extends Interactor
 	protected function _addEntry(InteractableInterface $entry)
 	{
 		$cnt = $this->_addKnownType($entry->getType());
-
-		if ($entry->isMutable())
-		{
-			$cnt += $this->_fillTokensOfEntry($entry);
-		}
-
+		$cnt += $this->_fillTokensOfEntry($entry);
 		return $cnt;
 	}
 
@@ -97,7 +92,7 @@ class Indexer extends Interactor
 			$this->_redisInteractor->getRedisUtil()->del($keyName);
 		}
 
-		return $this->_addMulti($keyName, $entry->getTokens());
+		return $this->_redisInteractor->getRedisUtil()->hashSet($keyName, $entry->getTokens());
 	}
 
 	/**

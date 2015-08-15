@@ -52,6 +52,14 @@ abstract class InteractableObject implements InteractableInterface
 	}
 
 	/**
+	 * @return array
+	 */
+	public function getTokensUnique()
+	{
+		return array_unique($this->_tokens);
+	}
+
+	/**
 	 * @param array $tokens
 	 */
 	public function setTokens($tokens)
