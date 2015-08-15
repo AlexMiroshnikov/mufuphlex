@@ -78,12 +78,7 @@ class Searcher extends Interactor
 	 */
 	public function getResultCount()
 	{
-		if (!$this->_result)
-		{
-			throw new Exception('Can not provide count because the search was not executed yet');
-		}
-
-		return $this->_count;
+		return ($this->_result ? $this->_count : 0);
 	}
 
 	/**
@@ -93,12 +88,7 @@ class Searcher extends Interactor
 	 */
 	public function getResultCountByType($type)
 	{
-		if (!$this->_result)
-		{
-			throw new Exception('Can not provide count because the search was not executed yet');
-		}
-
-		return (isset($this->_result[$type]) ? count($this->_result[$type]) : 0);
+		return (($this->_result AND isset($this->_result[$type])) ? count($this->_result[$type]) : 0);
 	}
 
 	/**
@@ -135,7 +125,7 @@ class Searcher extends Interactor
 	 */
 	protected function _reset()
 	{
-		$this->_result = array();
+		$this->_result = null;
 		$this->_count = 0;
 		$this->_tokens = array();
 		$this->_tokensCount = 0;

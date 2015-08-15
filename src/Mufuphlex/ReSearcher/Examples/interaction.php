@@ -32,7 +32,9 @@ class InteractorAdvert extends \Mufuphlex\ReSearcher\InteractableObject
 
 		foreach ($resultsIds as $id)
 		{
-			$results[] = array('id' => (int)$id);
+			$obj = new \stdClass();
+			$obj->id = (int)$id;
+			$results[] = $obj;
 		}
 
 		return $results;

@@ -22,7 +22,17 @@ foreach ($searchs as $term)
 {
 	echo "\nSearched for '".$term."'";
 	$results = $searcher->search($term, $settings);
-	echo "\nResults:\n"; var_dump($results); echo "\n";
+	echo "\nResults (".$searcher->getResultCount()."):\n";
+
+	foreach ($results as $type => $typedResults)
+	{
+		echo "\n type ".$type." (".$searcher->getResultCountByType($type)." found)\n";
+
+		foreach ($typedResults as $result)
+		{
+			echo "\t#".$result->getObject()->id." => ".implode(' ', $result->getTokens())."\t (".round($result->getScore(), 3).")\n";
+		}
+	}
 }
 
-echo "\nTook ".(round(microtime(true) - $ts, 5)).' ms, '.round(memory_get_peak_usage(true)/1000, 1)." kb\n";
+echo "\nTook ".(round(microtime(true) - $ts, 5)).' s, '.round(memory_get_peak_usage(true)/1000, 1)." kb\n";

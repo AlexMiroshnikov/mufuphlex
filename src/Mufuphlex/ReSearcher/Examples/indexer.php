@@ -16,7 +16,7 @@ $indexer->setFilter(function($token){
 $ads = array(
 	array(
 		'id' => 1,
-		'title' => 'This is a text title',
+		'title' => 'This is a text title with the phrase',
 		'description' => 'And this is a description',
 		'url' => 'https://www.github.com',
 		'phrases' => array(
@@ -27,6 +27,10 @@ $ads = array(
 			array(
 				'id' => 2,
 				'phrase' => 'buy a motorbike'
+			),
+			array(
+				'id' => 3,
+				'phrase' => 'the phrase'
 			)
 		)
 	)
@@ -45,4 +49,4 @@ foreach ($ads as $ad)
 	}
 }
 
-echo "\nTook ".(round(microtime(true) - $ts, 5)).' ms, '.round(memory_get_peak_usage(true)/1000, 1)." kb\n";
+echo "\nTook ".(round(microtime(true) - $ts, 5)).' s, '.round(memory_get_peak_usage(true)/1000, 1)." kb\n";
