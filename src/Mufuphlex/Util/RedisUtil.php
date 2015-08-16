@@ -145,7 +145,7 @@ class RedisUtil
 	 */
 	public function listGet($listName)
 	{
-		return $this->_redis->lGetRange($listName, 0, $this->_redis->lLen($listName)-1);
+		return $this->_redis->lGetRange($listName, 0, -1);
 	}
 
 	/**
