@@ -30,6 +30,9 @@ class Scorer implements ScorerInterface
 	/** @var int */
 	protected $_searcherTokensCnt = 0;
 
+	/** @var array */
+	protected $_tokenMap = array();
+
 	/** @var float */
 	protected $_elementaryPenalty = 0.0;
 
@@ -38,6 +41,12 @@ class Scorer implements ScorerInterface
 
 	/** @var array */
 	protected $_positions = array();
+
+	/** @var int */
+	protected $_exactMatchCnt = 0;
+
+	/** @var bool */
+	protected $_hasExactMatch = false;
 
 	/**
 	 * @param Searcher $searcher
@@ -65,6 +74,7 @@ class Scorer implements ScorerInterface
 
 		$this->_penalizeForProximity();
 		$searcherResult->setScore($this->_score);
+		$searcherResult->setExactMatch($this->_hasExactMatch);
 		return $this->_score;
 	}
 
@@ -76,6 +86,9 @@ class Scorer implements ScorerInterface
 	{
 		$this->_elementaryPenalty = 1/$this->_tokensCnt;
 		$this->_orderPenalty = self::WEIGHT_ORDER_PENALTY*$this->_elementaryPenalty;
+		$this->_exactMatchCnt = 1;
+		$this->_hasExactMatch = false;
+		$this->_tokenMap = array_fill_keys($this->_searcherTokens, 0);
 		$this->_setPositions();
 
 		foreach ($this->_positions as $index => $curPosition)
@@ -88,6 +101,11 @@ class Scorer implements ScorerInterface
 			$penalty = $this->_calcPenalty($index, $curPosition);
 			$this->_score += $penalty;
 		}
+
+		/*
+		echo "\n\texact: ".$this->_exactMatchCnt;
+		echo "\n\tTKMAP: "; var_dump($this->_tokenMap);
+		//*/
 	}
 
 	/**
@@ -98,9 +116,46 @@ class Scorer implements ScorerInterface
 	protected function _calcPenalty($index, $curPosition)
 	{
 		$token = $this->_tokens[$curPosition];
+		$this->_tokenMap[$token] = 1;
 		//echo "\nToken |".$token."|";
 		$penalty = $this->_positions[$index + 1] - $curPosition - 1;
+		$this->_exactMatch($penalty);
+
+		if (array_sum($this->_tokenMap) == $this->_searcherTokensCnt)
+		{
+			$penalty = -$this->_elementaryPenalty;
+		}
+		elseif ($token == $this->_tokens[$this->_positions[$index+1]])
+		{
+			$penalty = -$this->_elementaryPenalty;
+		}
+
 		return $penalty;
+	}
+
+	/**
+	 * @param int $penalty
+	 * @return bool
+	 */
+	protected function _exactMatch($penalty)
+	{
+		if ($penalty)
+		{
+			$this->_exactMatchCnt = 1;
+			return false;
+		}
+
+		if (!$this->_hasExactMatch)
+		{
+			$this->_exactMatchCnt++;
+
+			if ($this->_exactMatchCnt == $this->_searcherTokensCnt)
+			{
+				$this->_hasExactMatch = true;
+			}
+		}
+
+		return true;
 	}
 
 	/**
