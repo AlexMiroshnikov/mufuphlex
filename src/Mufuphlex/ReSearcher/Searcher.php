@@ -35,6 +35,9 @@ class Searcher extends Interactor
 	/** @var bool */
 	protected $_verbose = false;
 
+	/** @var ScorerInterface */
+	protected $_scorer = null;
+
 	/**
 	 * @param RedisInteractor $redisInteractor
 	 * @param TokenizerInterface $tokenizer
@@ -55,18 +58,16 @@ class Searcher extends Interactor
 		if ($this->_verbose) { echo "\nSearch for |".$str."|"; }
 
 		$this->_reset();
-		$this->_setStr($str);
 
-		if (!$this->_tokens = $this->_tokenizer->tokenize($this->_str))
+		if ($this->setStr($str))
 		{
 			return null;
 		}
 
-		$this->_tokensCount = count($this->_tokens);
-
 		$searcherResultSettings = $this->_prepareSearcherResultSettings($searcherResultSettings);
 		$this->_result = $this->_search($this->_tokens, $searcherResultSettings);
 		$typedResults = array();
+		$this->_scorer = new Scorer($this);
 
 		foreach ($this->_result as $type => $results)
 		{
@@ -109,6 +110,35 @@ class Searcher extends Interactor
 	public function getResultCountByType($type)
 	{
 		return (($this->_result AND isset($this->_result[$type])) ? count($this->_result[$type]) : 0);
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getTokens()
+	{
+		return $this->_tokens;
+	}
+
+	/**
+	 * @return bool
+	 */
+	public function setStr($str)
+	{
+		if (!is_string($str))
+		{
+			throw new \InvalidArgumentException('$str must be a string, '.gettype($str).' given');
+		}
+
+		$this->_setStr($str);
+
+		if (!$this->_tokens = $this->_tokenizer->tokenize($this->_str))
+		{
+			return false;
+		}
+
+		$this->_tokensCount = count($this->_tokens);
+		return true;
 	}
 
 	/**
@@ -203,17 +233,9 @@ class Searcher extends Interactor
 	 */
 	protected function _createTypedResults(SearcherResultSettings $searcherResultSettings, array $results)
 	{
-		$typedResults = array();
-
-		/*
-		$objects = call_user_func_array(
-			array($searcherResultSettings->getResultClass(), 'createResults'),
-			array($results)
-		);
-		//*/
-
 		$type = $searcherResultSettings->getType();
 		$needSort = $searcherResultSettings->needsSortByProximity() || $this->_isExact;
+		$typedResults = array();
 
 		foreach ($results as $resultId)
 		{
@@ -265,6 +287,9 @@ class Searcher extends Interactor
 	 */
 	protected function _setScore(SearcherResult $searcherResult, array $tokens)
 	{
+		$score = $this->_scorer->score($searcherResult, $tokens);
+		return $score;
+
 		$score = self::DEFAULT_SCORE;
 		$exactCounter = 1;
 
