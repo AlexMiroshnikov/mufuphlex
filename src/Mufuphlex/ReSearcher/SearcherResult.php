@@ -19,6 +19,27 @@ class SearcherResult
 	/** @var bool */
 	protected $_exactMatch = false;
 
+	/** @var mixed */
+	protected $_id = null;
+
+	/**
+	 * @return mixed
+	 */
+	public function getId()
+	{
+		return $this->_id;
+	}
+
+	/**
+	 * @param mixed $id
+	 * @return $this
+	 */
+	public function setId($id)
+	{
+		$this->_id = $id;
+		return $this;
+	}
+
 	/**
 	 * @return array
 	 */

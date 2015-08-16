@@ -8,7 +8,8 @@ namespace Mufuphlex\ReSearcher;
 class Searcher extends Interactor
 {
 	const DEFAULT_SCORE = 1.0;
-	const PROXIMITY_WEIGHT = 1;
+	const WEIGHT_PROXIMITY = 1;
+	const WEIGHT_ORDER_PENALTY = 1.1;
 
 	/** @var string */
 	protected $_str = '';
@@ -74,8 +75,12 @@ class Searcher extends Interactor
 			if ($searcherResultSettings[$type]->needsSortByProximity())
 			{
 				usort($typedResults[$type], function($a, $b){
+					// 1 score up => position down
 					if ($a->getScore() > $b->getScore()) return 1;
 					if ($a->getScore() < $b->getScore()) return -1;
+					// 2 id up => position up
+					if ($a->getId() > $b->getId()) return 1;
+					if ($a->getId() < $b->getId()) return -1;
 					return 0;
 				});
 			}
@@ -200,17 +205,19 @@ class Searcher extends Interactor
 	{
 		$typedResults = array();
 
+		/*
 		$objects = call_user_func_array(
 			array($searcherResultSettings->getResultClass(), 'createResults'),
 			array($results)
 		);
+		//*/
 
 		$type = $searcherResultSettings->getType();
 		$needSort = $searcherResultSettings->needsSortByProximity() || $this->_isExact;
 
-		foreach ($objects as $object)
+		foreach ($results as $resultId)
 		{
-			$typedResult = $this->_createTypedResult($object, $type, $needSort);
+			$typedResult = $this->_createTypedResult($resultId, $type, $needSort);
 
 			if (!$typedResult)
 			{
@@ -224,16 +231,16 @@ class Searcher extends Interactor
 	}
 
 	/**
-	 * @param \Object $object
+	 * @param mixed $resultId
 	 * @param string $type
 	 * @param bool $needSort
 	 * @return SearcherResult
 	 */
-	protected function _createTypedResult($object, $type, $needSort)
+	protected function _createTypedResult($resultId, $type, $needSort)
 	{
 		$typedResult = new SearcherResult();
-		$typedResult->setObject($object);
-		$keyName = $this->_redisInteractor->makeKeyName($object->id, $this->_redisInteractor->getPrefixEntry(), $type);
+		$typedResult->setId($resultId);
+		$keyName = $this->_redisInteractor->makeKeyName($resultId, $this->_redisInteractor->getPrefixEntry(), $type);
 		$tokens = $this->_redisInteractor->getRedisUtil()->hashGet($keyName);
 		$typedResult->setTokens($tokens);
 
@@ -243,7 +250,7 @@ class Searcher extends Interactor
 
 			if ($this->_isExact AND !$typedResult->hasExactMatch())
 			{
-				if ($this->_verbose) { echo "\n\trelegate ".$object->id.' ('.$typedResult->getScore().')'; }
+				if ($this->_verbose) { echo "\n\trelegate ".$resultId.' ('.$typedResult->getScore().')'; }
 				return null;
 			}
 		}
@@ -260,12 +267,16 @@ class Searcher extends Interactor
 	{
 		$score = self::DEFAULT_SCORE;
 		$exactCounter = 1;
-		$curScore = $score;
 
-		if ($this->_verbose) { echo "\n\tsearch tokens cnt ".$this->_tokensCount; }
+		if ($this->_verbose)
+		{
+			echo "\n\n\tsearch tokens cnt ".$this->_tokensCount.", they are: "; var_dump($this->_tokens); echo "\n";
+		}
 
 		if (($tokensCnt = count($tokens)) > 1)
 		{
+			$elementaryScore = 1/$tokensCnt;
+			$orderPenalty = self::WEIGHT_ORDER_PENALTY*$elementaryScore;
 			$positions = array_intersect($tokens, $this->_tokens);
 			if ($this->_verbose) { echo "\npositions: ";var_dump($positions); echo "\n"; }
 			$positions = array_keys($positions);
@@ -277,28 +288,47 @@ class Searcher extends Interactor
 					break;
 				}
 
+				$curScore = self::DEFAULT_SCORE;
+
 				if (($tokens[$positions[$i + 1]] == $tokens[$val]) AND ($exactCounter != $this->_tokensCount))
 				{
-					$score -= 1/$tokensCnt;
+					$curScore = -$elementaryScore;
 				}
 				else
 				{
-					$curScore = $positions[$i + 1] - $val;
-					$score += ($curScore - 1);
+					$curScore = $positions[$i + 1] - $val - 1;
 				}
+
+				if ($this->_verbose) { echo "\n\t\traw cur score ".$curScore; }
 
 				if ($exactCounter < $this->_tokensCount)
 				{
-					if ($curScore <= self::DEFAULT_SCORE)
+					if ($this->_verbose) { echo "\n\t\tcmp tokens |".$this->_tokens[$exactCounter-1]."| vs |".$tokens[$val]."|"; }
+
+					// penalty for near-but-not-the-same-order
+					if ($this->_tokens[$exactCounter-1] != $tokens[$val])
+					{
+						$curScore += $orderPenalty;
+						if ($this->_verbose) { echo "\n\t\tpenalty NEQ"; }
+					}
+
+					if (($curScore >= 0) AND ($curScore < self::DEFAULT_SCORE) AND ($this->_tokens[$exactCounter-1] == $tokens[$val]))
 					{
 						$exactCounter++;
 					}
 					else
 					{
-						$exactCounter = 1;
+						if ($exactCounter > 1)
+						{
+							$exactCounter--;
+						}
 					}
+
 					if ($this->_verbose) { echo "\n\t\tset EC ".$exactCounter; }
 				}
+
+				if ($this->_verbose) { echo "\n\t\tpayload score ".$curScore; }
+				$score += $curScore;
 			}
 		}
 
@@ -317,7 +347,7 @@ class Searcher extends Interactor
 		if ($this->_tokensCount != $tokensCnt)
 		{
 
-			$score += self::PROXIMITY_WEIGHT*(1 - $this->_tokensCount / $tokensCnt);
+			$score += self::WEIGHT_PROXIMITY*(1 - $this->_tokensCount / $tokensCnt);
 		}
 
 		$searcherResult->setScore($score);

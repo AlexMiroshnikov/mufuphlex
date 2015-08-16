@@ -21,6 +21,12 @@ class SearcherTest extends PHPUnit_Framework_TestCase
 			'thử độ hot girl cùng đo bạn hot tới đâu click ngay cpvm vn',
 			'chơi game hot cùng hot girl chơi game vơ i hot girl trang anna qua thi ch mê tham gia ngay thitien vn landing',
 			'chơi game hot cùng hot girl ngay cùng hot girl trang anna hóa thân tiên nữ nơi tiên giới kì ảo xem ngay thitien vn landing'
+		),
+		//*/
+		'game online moi' => array(
+			'game online moi',
+			'game online moi',
+			'game moi online'
 		)
 		//*/
 	);
@@ -43,9 +49,11 @@ class SearcherTest extends PHPUnit_Framework_TestCase
 	public function testProximitySorting()
 	{
 		$i = 0;
+		echo "\n";
+
 		foreach ($this->_proximitySets as $str => $set)
 		{
-			echo "\nProximity set ".$i++."\n";
+			echo "Proximity set ".++$i."\n";
 			$this->_testProximitySorting($str, $set);
 		}
 	}
@@ -79,7 +87,7 @@ class SearcherTest extends PHPUnit_Framework_TestCase
 
 		for ($i=1; $i<=$setCnt; $i++)
 		{
-			$this->assertEquals($i, $result[($i-1)]->getObject()->id);
+			$this->assertEquals($i, $result[($i-1)]->getId());
 			$this->assertEquals($set[$i-1], implode(' ', $result[($i-1)]->getTokens()));
 		}
 	}
@@ -110,14 +118,16 @@ class SearcherTest extends PHPUnit_Framework_TestCase
 			'resultClass' => '\Mufuphlex\ReSearcher\InteractableObject\Dummy'
 		));
 
+		//*
 		$result = $this->_searcher->search($baseStr2, array($settings));
 		$result = $result[$type];
 		$this->assertCount(2, $result);
+		//*/
 
 		$result = $this->_searcher->search('"'.$baseStr2.'"', array($settings));
 		$result = $result[$type];
 		$this->assertCount(1, $result);
-		$this->assertEquals(2, $result[0]->getObject()->id);
+		$this->assertEquals(2, $result[0]->getId());
 	}
 	//*/
 
@@ -156,7 +166,7 @@ class SearcherTest extends PHPUnit_Framework_TestCase
 		for ($i=1; $i<=2; $i++)
 		{
 			$str = ${'str'.$i};
-			$this->assertEquals($i, $result[($i-1)]->getObject()->id);
+			$this->assertEquals($i, $result[($i-1)]->getId());
 			$this->assertEquals($str, implode(' ', $result[($i-1)]->getTokens()));
 		}
 	}

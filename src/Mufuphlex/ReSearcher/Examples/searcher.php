@@ -30,7 +30,7 @@ foreach ($searchs as $term)
 
 		foreach ($typedResults as $result)
 		{
-			echo "\t#".$result->getObject()->id." => ".implode(' ', $result->getTokens())."\t (".round($result->getScore(), 3).")\n";
+			echo "\t#".$result->getId()." => ".implode(' ', $result->getTokens())."\t (".round($result->getScore(), 3).")\n";
 		}
 	}
 }
