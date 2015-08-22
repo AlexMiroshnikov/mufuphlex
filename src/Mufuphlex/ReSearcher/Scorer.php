@@ -11,6 +11,7 @@ class Scorer implements ScorerInterface
 	const SCORE_DEFAULT = 1.0;
 	const WEIGHT_PROXIMITY = 1.0;
 	const WEIGHT_ORDER_PENALTY = 1.1;
+	const WEIGHT_ORDER_BONUS = 1;
 
 	/** @var Searcher */
 	protected $_searcher = null;
@@ -31,7 +32,7 @@ class Scorer implements ScorerInterface
 	protected $_searcherTokensCnt = 0;
 
 	/** @var array */
-	protected $_tokenMap = array();
+	protected $_tokenPenaltyMap = array();
 
 	/** @var float */
 	protected $_elementaryPenalty = 0.0;
@@ -86,48 +87,28 @@ class Scorer implements ScorerInterface
 	{
 		$this->_elementaryPenalty = 1/$this->_tokensCnt;
 		$this->_orderPenalty = self::WEIGHT_ORDER_PENALTY*$this->_elementaryPenalty;
-		$this->_exactMatchCnt = 1;
+		$this->_exactMatchCnt = 0;
 		$this->_hasExactMatch = false;
-		$this->_tokenMap = array_fill_keys($this->_searcherTokens, 0);
+		$this->_tokenPenaltyMap = array_fill_keys($this->_searcherTokens, false);
 		$this->_setPositions();
-
-		foreach ($this->_positions as $index => $curPosition)
-		{
-			if (!isset($this->_positions[$index + 1]))
-			{
-				break;
-			}
-
-			$penalty = $this->_calcPenalty($index, $curPosition);
-			$this->_score += $penalty;
-		}
-
-		/*
-		echo "\n\texact: ".$this->_exactMatchCnt;
-		echo "\n\tTKMAP: "; var_dump($this->_tokenMap);
-		//*/
+		$this->_scorePositions();
 	}
 
 	/**
 	 * @param int $index
-	 * @param int $curPosition
+	 * @param string $token
 	 * @return float
 	 */
-	protected function _calcPenalty($index, $curPosition)
+	protected function _calcPenalty($index, $token)
 	{
-		$token = $this->_tokens[$curPosition];
-		$this->_tokenMap[$token] = 1;
-		//echo "\nToken |".$token."|";
-		$penalty = $this->_positions[$index + 1] - $curPosition - 1;
+		$penalty = (isset($this->_positions[$index - 1]) ? ($this->_positions[$index] - $this->_positions[$index - 1] - 1) : 0);
 		$this->_exactMatch($penalty);
 
-		if (array_sum($this->_tokenMap) == $this->_searcherTokensCnt)
+		if ((($pos = $this->_exactMatchCnt - 1) > 0) AND
+			$token != $this->_searcherTokens[$pos]
+		)
 		{
-			$penalty = -$this->_elementaryPenalty;
-		}
-		elseif ($token == $this->_tokens[$this->_positions[$index+1]])
-		{
-			$penalty = -$this->_elementaryPenalty;
+			$penalty += $this->_orderPenalty;
 		}
 
 		return $penalty;
@@ -185,8 +166,48 @@ class Scorer implements ScorerInterface
 	protected function _setPositions()
 	{
 		$positions = array_intersect($this->_tokens, $this->_searcherTokens);
-		//echo "\npositions: ";var_dump($positions); echo "\n";
 		$this->_positions = array_keys($positions);
 		return $this;
+	}
+
+	/**
+	 * @param void
+	 * @return void
+	 */
+	protected function _scorePositions()
+	{
+		foreach ($this->_positions as $index => $curPosition)
+		{
+			$token = $this->_tokens[$curPosition];
+
+			if ($this->_tokenPenaltyMap[$token] !== false)	// small bonus for repeating the token
+			{
+				$this->_score -= $this->_elementaryPenalty;
+			}
+			else
+			{
+				$this->_tokenPenaltyMap[$token] = true;
+			}
+
+			$penalty = $this->_calcPenalty($index, $token);
+
+			if ($penalty < 0)
+			{
+				$this->_score += $penalty;
+			}
+			elseif ($this->_tokenPenaltyMap[$token] === true)
+			{
+				$this->_tokenPenaltyMap[$token] = $penalty;
+			}
+			elseif ($penalty < $this->_tokenPenaltyMap[$token])
+			{
+				$this->_tokenPenaltyMap[$token] = $penalty;
+			}
+		}
+
+		foreach ($this->_tokenPenaltyMap as $penalty)
+		{
+			$this->_score += $penalty;
+		}
 	}
 }
