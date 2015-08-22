@@ -7,10 +7,6 @@ namespace Mufuphlex\ReSearcher;
  */
 class Searcher extends Interactor
 {
-	const DEFAULT_SCORE = 1.0;
-	const WEIGHT_PROXIMITY = 1;
-	const WEIGHT_ORDER_PENALTY = 1.1;
-
 	/** @var string */
 	protected $_str = '';
 
@@ -35,6 +31,9 @@ class Searcher extends Interactor
 	/** @var bool */
 	protected $_verbose = false;
 
+	/** @var ScorerInterface */
+	protected $_scorer = null;
+
 	/**
 	 * @param RedisInteractor $redisInteractor
 	 * @param TokenizerInterface $tokenizer
@@ -55,18 +54,16 @@ class Searcher extends Interactor
 		if ($this->_verbose) { echo "\nSearch for |".$str."|"; }
 
 		$this->_reset();
-		$this->_setStr($str);
 
-		if (!$this->_tokens = $this->_tokenizer->tokenize($this->_str))
+		if (!$this->setStr($str))
 		{
 			return null;
 		}
 
-		$this->_tokensCount = count($this->_tokens);
-
 		$searcherResultSettings = $this->_prepareSearcherResultSettings($searcherResultSettings);
 		$this->_result = $this->_search($this->_tokens, $searcherResultSettings);
 		$typedResults = array();
+		$this->_scorer = new Scorer($this);
 
 		foreach ($this->_result as $type => $results)
 		{
@@ -109,6 +106,35 @@ class Searcher extends Interactor
 	public function getResultCountByType($type)
 	{
 		return (($this->_result AND isset($this->_result[$type])) ? count($this->_result[$type]) : 0);
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getTokens()
+	{
+		return $this->_tokens;
+	}
+
+	/**
+	 * @return bool
+	 */
+	public function setStr($str)
+	{
+		if (!is_string($str))
+		{
+			throw new \InvalidArgumentException('$str must be a string, '.gettype($str).' given');
+		}
+
+		$this->_setStr($str);
+
+		if (!$this->_tokens = $this->_tokenizer->tokenize($this->_str))
+		{
+			return false;
+		}
+
+		$this->_tokensCount = count($this->_tokens);
+		return true;
 	}
 
 	/**
@@ -203,17 +229,9 @@ class Searcher extends Interactor
 	 */
 	protected function _createTypedResults(SearcherResultSettings $searcherResultSettings, array $results)
 	{
-		$typedResults = array();
-
-		/*
-		$objects = call_user_func_array(
-			array($searcherResultSettings->getResultClass(), 'createResults'),
-			array($results)
-		);
-		//*/
-
 		$type = $searcherResultSettings->getType();
 		$needSort = $searcherResultSettings->needsSortByProximity() || $this->_isExact;
+		$typedResults = array();
 
 		foreach ($results as $resultId)
 		{
@@ -246,7 +264,7 @@ class Searcher extends Interactor
 
 		if ($needSort)
 		{
-			$this->_setScore($typedResult, $tokens);
+			$this->_scorer->score($typedResult);
 
 			if ($this->_isExact AND !$typedResult->hasExactMatch())
 			{
@@ -256,103 +274,6 @@ class Searcher extends Interactor
 		}
 
 		return $typedResult;
-	}
-
-	/**
-	 * @param SearcherResult $searcherResult
-	 * @param array $tokens
-	 * @return float
-	 */
-	protected function _setScore(SearcherResult $searcherResult, array $tokens)
-	{
-		$score = self::DEFAULT_SCORE;
-		$exactCounter = 1;
-
-		if ($this->_verbose)
-		{
-			echo "\n\n\tsearch tokens cnt ".$this->_tokensCount.", they are: "; var_dump($this->_tokens); echo "\n";
-		}
-
-		if (($tokensCnt = count($tokens)) > 1)
-		{
-			$elementaryScore = 1/$tokensCnt;
-			$orderPenalty = self::WEIGHT_ORDER_PENALTY*$elementaryScore;
-			$positions = array_intersect($tokens, $this->_tokens);
-			if ($this->_verbose) { echo "\npositions: ";var_dump($positions); echo "\n"; }
-			$positions = array_keys($positions);
-
-			foreach ($positions as $i => $val)
-			{
-				if (!isset($positions[$i+1]))
-				{
-					break;
-				}
-
-				$curScore = self::DEFAULT_SCORE;
-
-				if (($tokens[$positions[$i + 1]] == $tokens[$val]) AND ($exactCounter != $this->_tokensCount))
-				{
-					$curScore = -$elementaryScore;
-				}
-				else
-				{
-					$curScore = $positions[$i + 1] - $val - 1;
-				}
-
-				if ($this->_verbose) { echo "\n\t\traw cur score ".$curScore; }
-
-				if ($exactCounter < $this->_tokensCount)
-				{
-					if ($this->_verbose) { echo "\n\t\tcmp tokens |".$this->_tokens[$exactCounter-1]."| vs |".$tokens[$val]."|"; }
-
-					// penalty for near-but-not-the-same-order
-					if ($this->_tokens[$exactCounter-1] != $tokens[$val])
-					{
-						$curScore += $orderPenalty;
-						if ($this->_verbose) { echo "\n\t\tpenalty NEQ"; }
-					}
-
-					if (($curScore >= 0) AND ($curScore < self::DEFAULT_SCORE) AND ($this->_tokens[$exactCounter-1] == $tokens[$val]))
-					{
-						$exactCounter++;
-					}
-					else
-					{
-						if ($exactCounter > 1)
-						{
-							$exactCounter--;
-						}
-					}
-
-					if ($this->_verbose) { echo "\n\t\tset EC ".$exactCounter; }
-				}
-
-				if ($this->_verbose) { echo "\n\t\tpayload score ".$curScore; }
-				$score += $curScore;
-			}
-		}
-
-		if ($this->_verbose) { echo "\n\tclean score: ".$score; }
-
-		if ($exactCounter == $this->_tokensCount)
-		{
-			$searcherResult->setExactMatch(true);
-
-			if ($score > self::DEFAULT_SCORE)
-			{
-				$score = self::DEFAULT_SCORE;
-			}
-		}
-
-		if ($this->_tokensCount != $tokensCnt)
-		{
-
-			$score += self::WEIGHT_PROXIMITY*(1 - $this->_tokensCount / $tokensCnt);
-		}
-
-		$searcherResult->setScore($score);
-		if ($this->_verbose) { echo "\n\tfinal score: ".$score; }
-		return $score;
 	}
 
 	/**
