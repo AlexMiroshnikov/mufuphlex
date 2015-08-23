@@ -1,7 +1,7 @@
 {
   "name": "mufuphlex/researcher",
   "type": "library",
-  "version": "0.1",
+  "version": "0.2",
   "description": "Redis searcher from Multi functional PHP library",
   "keywords": [
     "redis searcher",
