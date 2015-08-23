@@ -24,9 +24,9 @@ class SearcherTest extends PHPUnit_Framework_TestCase
 		),
 		//*/
 		'game online moi' => array(
-			'game online moi',
-			'game online moi',
-			'game moi online'
+			'3 ' => 'game online moi',
+			'2 ' => 'game online moi',
+			'1 ' => 'game moi online'
 		)
 		//*/
 	);
@@ -62,10 +62,27 @@ class SearcherTest extends PHPUnit_Framework_TestCase
 	public function _testProximitySorting($str, $set)
 	{
 		$this->_redisInteractor->getRedisUtil()->flushDb();
+		$idsPredefined = false;
+		$idsMap = array();
 
 		foreach ($set as $i => $item)
 		{
-			$dummy = new \Mufuphlex\ReSearcher\InteractableObject\Dummy(array('id' => ($i+1)));
+			if (!$idsPredefined && is_string($i))
+			{
+				$idsPredefined = true;
+			}
+
+			if ($idsPredefined)
+			{
+				$id = (int)trim($i);
+				$idsMap[$i] = $id;
+			}
+			else
+			{
+				$id = $i + 1;
+			}
+
+			$dummy = new \Mufuphlex\ReSearcher\InteractableObject\Dummy(array('id' => $id));
 			$dummy->setTokens(explode(' ', $item));
 			$this->_indexer->addObject($dummy);
 		}
@@ -85,10 +102,15 @@ class SearcherTest extends PHPUnit_Framework_TestCase
 		$setCnt = count($set);
 		$this->assertCount($setCnt, $result);
 
-		for ($i=1; $i<=$setCnt; $i++)
+		$idsMapFlip = ($idsMap ? array_flip($idsMap) : null);
+		$idsMap = array_values($idsMap);
+
+		foreach ($result as $resultNum => $searchResult)
 		{
-			$this->assertEquals($i, $result[($i-1)]->getId());
-			$this->assertEquals($set[$i-1], implode(' ', $result[($i-1)]->getTokens()));
+			$expectedId = ($idsMap ? $idsMap[$resultNum] : ($resultNum + 1));
+			$this->assertEquals($expectedId, $searchResult->getId());
+			$expectedStr = ($idsMap ? $set[$idsMapFlip[$expectedId]] : $set[$resultNum]);
+			$this->assertEquals($expectedStr, implode(' ', $searchResult->getTokens()));
 		}
 	}
 

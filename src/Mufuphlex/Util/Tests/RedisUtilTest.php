@@ -35,7 +35,7 @@ class RedisUtilTest extends PHPUnit_Framework_TestCase
 		);
 
 		$this->_redisUtil->setAddMulti($key, $values);
-		$this->assertArraySubset($values, $this->_redisUtil->setGet($key));
+		$this->assertEmpty(array_diff(array_values($values), array_values($this->_redisUtil->setGet($key))));
 	}
 
 	public function testSetIntersect()
