@@ -76,8 +76,8 @@ class Searcher extends Interactor
 					if ($a->getScore() > $b->getScore()) return 1;
 					if ($a->getScore() < $b->getScore()) return -1;
 					// 2 id up => position up
-					if ($a->getId() > $b->getId()) return 1;
-					if ($a->getId() < $b->getId()) return -1;
+					if ($a->getId() > $b->getId()) return -1;
+					if ($a->getId() < $b->getId()) return 1;
 					return 0;
 				});
 			}
