@@ -1,5 +1,4 @@
 <?php
-
 class ArrayUtilTest extends PHPUnit_Framework_TestCase
 {
 	public function testWhitelistSimpleCase()
@@ -307,5 +306,67 @@ class ArrayUtilTest extends PHPUnit_Framework_TestCase
 			),
 			$cut
 		);
+	}
+
+	public function testUnique()
+	{
+		$array = array(1,2,3,4,5,1,2,3,1,2,1);
+		$unique = array(1,2,3,4,5);
+		$this->assertEquals($unique, \Mufuphlex\Util\ArrayUtil::unique($array));
+		$array = array('a','b','a');
+		$unique = array('a', 'b');
+		$this->assertEquals($unique, \Mufuphlex\Util\ArrayUtil::unique($array));
+	}
+
+	public function testUniqueKeepingKey()
+	{
+		$array = array(
+			'a' => 1,
+			'b' => 2,
+			'c' => 1,
+			'd' => 2,
+			'e' => 1,
+			'f' => 3
+		);
+
+		$unique = array(
+			'a' => 1,
+			'b' => 2,
+			'f' => 3
+		);
+
+		$this->assertEquals($unique, \Mufuphlex\Util\ArrayUtil::unique($array, true));
+	}
+
+	public function testPerformance()
+	{
+		$max = 100000;
+		$arr = range(1,$max,3);
+		$arr2 = range(1,$max,2);
+		$arr = array_merge($arr,$arr2);
+
+		$time = -microtime(true);
+		$res1 = array_unique($arr);
+		$time += microtime(true);
+		echo "\n".count($res1)." in ".$time;
+
+		$time = -microtime(true);
+		$res2 = array();
+		foreach($arr as $key=>$val) {
+			$res2[$val] = true;
+		}
+		$res2 = array_keys($res2);
+		$time += microtime(true);
+		echo "\n".count($res2)." in ".$time;
+
+		$time = -microtime(true);
+		$res3 = \Mufuphlex\Util\ArrayUtil::unique($arr);
+		$time += microtime(true);
+		echo "\n".count($res3)." in ".$time;
+
+		$time = -microtime(true);
+		$res4 = \Mufuphlex\Util\ArrayUtil::unique($arr, true);
+		$time += microtime(true);
+		echo "\n".count($res4)." in ".$time;
 	}
 }

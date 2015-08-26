@@ -119,4 +119,26 @@ class ArrayUtil
 
 		return $array;
 	}
+
+	/**
+	 * @param array $array
+	 * @param bool $keepKeys
+	 * @return array
+	 */
+	public static function unique(array $array, $keepKeys = false)
+	{
+		if ($keepKeys)
+		{
+			$array = array_reverse($array, true);
+		}
+
+		$flip = array_flip($array);
+
+		if (!$keepKeys)
+		{
+			return array_keys($flip);
+		}
+
+		return array_flip($flip);
+	}
 }
