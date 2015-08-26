@@ -1,7 +1,7 @@
 {
   "name": "mufuphlex/util",
   "type": "library",
-  "version": "1.01",
+  "version": "1.1",
   "description": "Utils from Multi functional PHP library",
   "keywords": [
     "util",
@@ -10,6 +10,12 @@
     "array walk",
     "array map",
     "array cut",
+    "array intersect",
+    "array unique",
+    "smart intersect",
+    "smart unique",
+    "fast intersect",
+    "fast unique",
     "redis",
     "redis util",
     "redis sugar",
