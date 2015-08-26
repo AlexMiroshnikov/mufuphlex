@@ -143,7 +143,7 @@ class ArrayUtil
 	}
 
 	/**
-	 * @param array $array1
+	 * @param array $array, $array2[, $array3, ...]
 	 * @return array
 	 */
 	public static function intersect(array $array)
