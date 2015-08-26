@@ -338,7 +338,21 @@ class ArrayUtilTest extends PHPUnit_Framework_TestCase
 		$this->assertEquals($unique, \Mufuphlex\Util\ArrayUtil::unique($array, true));
 	}
 
-	public function testPerformance()
+	public function testIntersect()
+	{
+		$a = array(1,2,3);
+		$b = array(3,4,5);
+		$expected = array(2 => 3);
+		$this->assertEquals($expected, \Mufuphlex\Util\ArrayUtil::intersect($a, $b));
+
+		$a = array(1,2,3,4);
+		$b = array(3,4,5,6);
+		$c = array(4,5,6,7);
+		$expected = array(3 => 4);
+		$this->assertEquals($expected, \Mufuphlex\Util\ArrayUtil::intersect($a, $b, $c));
+	}
+
+	public function testPerformanceUnique()
 	{
 		$max = 100000;
 		$arr = range(1,$max,3);
@@ -368,5 +382,22 @@ class ArrayUtilTest extends PHPUnit_Framework_TestCase
 		$res4 = \Mufuphlex\Util\ArrayUtil::unique($arr, true);
 		$time += microtime(true);
 		echo "\n".count($res4)." in ".$time;
+	}
+
+	public function testPerformanceIntersect()
+	{
+		$max = 100000;
+		$arr = range(1,$max,3);
+		$arr2 = range(1,$max,2);
+
+		$time = -microtime(true);
+		$res1 = array_intersect($arr, $arr2);
+		$time += microtime(true);
+		echo "\n".count($res1)." in ".$time;
+
+		$time = -microtime(true);
+		$res2 = \Mufuphlex\Util\ArrayUtil::intersect($arr, $arr2);
+		$time += microtime(true);
+		echo "\n".count($res2)." in ".$time;
 	}
 }

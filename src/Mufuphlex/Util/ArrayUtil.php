@@ -141,4 +141,37 @@ class ArrayUtil
 
 		return array_flip($flip);
 	}
+
+	/**
+	 * @param array $array1
+	 * @return array
+	 */
+	public static function intersect(array $array)
+	{
+		if (($argsCnt = func_num_args()) < 2)
+		{
+			throw new \InvalidArgumentException('At least 2 array must be passed');
+		}
+
+		$array2 = func_get_arg(1);
+		$flip = array_flip($array2);
+
+		foreach ($array as $key => $value)
+		{
+			if (!isset($flip[$value]))
+			{
+				unset($array[$key]);
+			}
+		}
+
+		if ($argsCnt > 2)
+		{
+			$args = func_get_args();
+			$args = array_slice($args, 2);
+			array_unshift($args, $array);
+			return call_user_func_array(array(__CLASS__, __FUNCTION__), $args);
+		}
+
+		return $array;
+	}
 }
