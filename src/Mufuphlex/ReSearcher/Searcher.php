@@ -232,12 +232,20 @@ class Searcher extends Interactor
 		$type = $searcherResultSettings->getType();
 		$needSort = $searcherResultSettings->needsSortByProximity() || $this->_isExact;
 		$typedResults = array();
+		$prefixEntry = $this->_redisInteractor->getPrefixEntry();
+		$redisUtil = $this->_redisInteractor->getRedisUtil()->multiStart();
 
 		foreach ($results as $resultId)
 		{
-			$typedResult = $this->_createTypedResult($resultId, $type, $needSort);
+			$keyName = $this->_redisInteractor->makeKeyName($resultId, $prefixEntry, $type);
+			$redisUtil->multiSeq(array('hGetAll' => array($keyName)));
+		}
 
-			if (!$typedResult)
+		$tokens = $redisUtil->multiExec();
+
+		foreach ($tokens as $num => $curTokens)
+		{
+			if (!$typedResult = $this->_createTypedResult($results[$num], $curTokens, $needSort))
 			{
 				continue;
 			}
@@ -250,16 +258,14 @@ class Searcher extends Interactor
 
 	/**
 	 * @param mixed $resultId
-	 * @param string $type
+	 * @param array $tokens
 	 * @param bool $needSort
 	 * @return SearcherResult
 	 */
-	protected function _createTypedResult($resultId, $type, $needSort)
+	protected function _createTypedResult($resultId, array $tokens, $needSort)
 	{
 		$typedResult = new SearcherResult();
 		$typedResult->setId($resultId);
-		$keyName = $this->_redisInteractor->makeKeyName($resultId, $this->_redisInteractor->getPrefixEntry(), $type);
-		$tokens = $this->_redisInteractor->getRedisUtil()->hashGet($keyName);
 		$typedResult->setTokens($tokens);
 
 		if ($needSort)
@@ -268,7 +274,6 @@ class Searcher extends Interactor
 
 			if ($this->_isExact AND !$typedResult->hasExactMatch())
 			{
-				if ($this->_verbose) { echo "\n\trelegate ".$resultId.' ('.$typedResult->getScore().')'; }
 				return null;
 			}
 		}

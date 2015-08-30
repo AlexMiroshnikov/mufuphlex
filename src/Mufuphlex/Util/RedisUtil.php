@@ -10,6 +10,9 @@ class RedisUtil
 	/** @var \Redis */
 	private $_redis;
 
+	/** @var array */
+	private $_multi = null;
+
 	/**
 	 * @param array $connectConfig
 	 */
@@ -175,6 +178,57 @@ class RedisUtil
 	public function flushDb()
 	{
 		$this->_redis->flushDB();
+		return $this;
+	}
+
+	/**
+	 * @return $this
+	 */
+	public function multiStart()
+	{
+		if ($this->_multi !== null)
+		{
+			throw new \RuntimeException('multi*() inited but not cleared');
+		}
+
+		$this->_multi = array();
+		return $this;
+	}
+
+	/**
+	 * @param array $operation
+	 * @return $this
+	 */
+	public function multiSeq(array $operation)
+	{
+		$this->_multi[] = $operation;
+		return $this;
+	}
+
+	/**
+	 * @return mixed
+	 */
+	public function multiExec()
+	{
+		$this->_redis->multi();
+
+		foreach ($this->_multi as $operation)
+		{
+			call_user_func_array(array($this->_redis, key($operation)), current($operation));
+		}
+
+		$res = $this->_redis->exec();
+		$this->multiReset();
+		return $res;
+	}
+
+	/**
+	 * @return $this
+	 */
+	public function multiReset()
+	{
+		$this->_redis->discard();
+		$this->_multi = null;
 		return $this;
 	}
 }
