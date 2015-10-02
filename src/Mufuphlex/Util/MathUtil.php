@@ -54,7 +54,7 @@ class MathUtil
 
     /**
      * @param mixed $a
-     * @param midex $b
+     * @param mixed $b
      * @return string
      */
     public static function mult($a, $b)
