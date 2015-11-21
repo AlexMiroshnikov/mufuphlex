@@ -1,18 +1,30 @@
 language: php
 
 php:
-  - 5.3
-  - 5.4
-  - 5.5
   - 5.6
-  - 7.0
-  - hhvm
 
 branches:
   only:
-    - feature/raqualizer
+    - master
+
+addons:
+  apt:
+    packages:
+    - php5-dev
+
+before_install:
+  - wget https://github.com/phpredis/phpredis/archive/develop.zip && unzip develop.zip && cd phpredis-develop
+  - phpize
+  - ./configure
+  - make
+  - sudo sed -i -e '$a\' `php -r 'echo php_ini_loaded_file();'`
+  - echo 'extension='`pwd`'/modules/redis.so' | sudo tee -a `php -r 'echo php_ini_loaded_file();'` > /dev/null
+  - cd ../
 
 install:
   - composer install --no-dev
 
-script: phpunit --configuration phpunit.xml.dist --testsuite 'Mufuphlex Raqualizer Test Suite' --coverage-text
+services:
+  - redis-server
+
+script: phpunit --configuration phpunit.xml.dist --coverage-text
