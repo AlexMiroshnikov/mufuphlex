@@ -22,6 +22,9 @@ before_install:
   - echo 'extension='`pwd`'/modules/redis.so' | sudo tee /etc/php5/cli/conf.d/redis.ini > /dev/null
   - echo 'extension='`pwd`'/modules/redis.so' | sudo tee /etc/php5/conf.d/redis.ini > /dev/null
   - cd ../
+  - cat /etc/php5/cli/conf.d/redis.ini
+  - cat /etc/php5/conf.d/redis.ini
+  - php -r 'echo "|".php_ini_loaded_file()."|\n";'
 
 install:
   - composer install --no-dev
