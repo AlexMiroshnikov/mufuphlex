@@ -18,7 +18,7 @@ before_install:
   - ./configure
   - make
   - sudo mkdir -p /etc/php5/cli/conf.d/
-  - sudo echo 'extension='`pwd`'/modules/redis.so' > /etc/php5/cli/conf.d/redis.ini
+  - echo 'extension='`pwd`'/modules/redis.so' | sudo tee /etc/php5/cli/conf.d/redis.ini > /dev/null
 
 install:
   - composer install --no-dev
