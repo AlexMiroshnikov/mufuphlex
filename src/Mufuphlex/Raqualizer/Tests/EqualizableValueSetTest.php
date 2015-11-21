@@ -75,4 +75,41 @@ class EqualizableValueSetTest extends PHPUnit_Framework_TestCase
         $this->assertEquals($valueDependence->getRatio(), $valueSet->getRatio());
         $this->assertEquals($ratio1, $valueSet->getRatio());
     }
+
+    /**
+     * @expectedException \LogicException
+     * @expectedExceptionTest Self count 1 does not equal to dependence's 2
+     */
+    public function tesDependsOnFailsOnMismatch()
+    {
+        $value1 = new EqualizableValue(1);
+        $value2 = new EqualizableValue(2);
+
+        $dependence = new EqualizableValueSet();
+        $dependence->addValues(array($value1, $value2));
+
+        $set = new EqualizableValueSet();
+        $set->addValue($value2);
+
+        $set->dependsOn($dependence);
+    }
+
+    /**
+     * @expectedException \LogicException
+     * @expectedExceptionTest The set already depends on some another set
+     */
+    public function testDependsOnFailsOnRedefine()
+    {
+        $value = new EqualizableValue(1);
+        $dependence = new EqualizableValueSet();
+        $dependence->addValue($value);
+        $dependence2 = new EqualizableValueSet();
+        $dependence2->addValue($value);
+
+        $set = new EqualizableValueSet();
+        $set->addValue($value);
+
+        $set->dependsOn($dependence);
+        $set->dependsOn($dependence2);
+    }
 }
