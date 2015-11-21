@@ -50,7 +50,7 @@ class EqualizableValue implements EqualizableValueInterface
     public function setRatio($ratio)
     {
         if (!is_numeric($ratio)) {
-            throw new \InvalidArgumentException('$original must be numeric');
+            throw new \InvalidArgumentException('$ratio must be numeric');
         }
 
         if ($ratio > 1 OR $ratio < 0) {
