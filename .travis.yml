@@ -12,16 +12,22 @@ branches:
   only:
     - service/travis
 
+addons:
+  apt:
+    packages:
+    - php5-dev
+
 before_install:
-  - sudo apt-get install php5-dev
   - wget https://github.com/phpredis/phpredis/archive/develop.zip && unzip develop.zip && cd phpredis-develop
   - phpize
   - ./configure
   - make
-  - sudo make install
-  - sudo echo 'extension=redis.so' > /etc/php5/conf.d/redis.ini
+  - echo 'extension='`pwd`'/modules/redis.so' > /etc/php5/conf.d/redis.ini
 
 install:
   - composer install --no-dev
+
+services:
+  - redis-server
 
 script: phpunit --configuration phpunit.xml.dist --coverage-text
