@@ -26,11 +26,6 @@
 			<directory>src/Mufuphlex/Raqualizer/Tests</directory>
 		</testsuite>
 	</testsuites>
-	<filter>
-		<blacklist>
-			<directory suffix=".php">src/Mufuphlex/Traits/</directory>
-		</blacklist>
-	</filter>
     <!--
 	<logging>
 		<log type="tap" target="build/report.tap"/>
