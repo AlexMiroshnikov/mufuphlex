@@ -27,9 +27,9 @@
 		</testsuite>
 	</testsuites>
 	<filter>
-		<whitelist>
+		<blacklist>
 			<directory suffix=".php">src/Mufuphlex/Traits/</directory>
-		</whitelist>
+		</blacklist>
 	</filter>
     <!--
 	<logging>

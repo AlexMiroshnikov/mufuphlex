@@ -80,7 +80,7 @@ class EqualizableValueSetTest extends PHPUnit_Framework_TestCase
      * @expectedException \LogicException
      * @expectedExceptionTest Self count 1 does not equal to dependence's 2
      */
-    public function tesDependsOnFailsOnMismatch()
+    public function testDependsOnFailsOnMismatch()
     {
         $value1 = new EqualizableValue(1);
         $value2 = new EqualizableValue(2);
