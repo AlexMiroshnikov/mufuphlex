@@ -29,4 +29,10 @@ interface EqualizableValueSetInterface
      * @return $this
      */
     public function arrangeRatios();
+
+    /**
+     * @param EqualizableValueSetInterface $set
+     * @return $this
+     */
+    public function dependsOn(EqualizableValueSetInterface $set);
 }

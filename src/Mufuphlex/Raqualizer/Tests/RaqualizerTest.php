@@ -36,19 +36,39 @@ class RaqualizerTest extends PHPUnit_Framework_TestCase
         $valueT2Price = new EqualizableValue(1132603.481724);
         $valueT2Clicks = new EqualizableValue(753);
 
-        $set = new EqualizableValueSet();
-        $set->addValue($valueT1Price)->addValue($valueT2Price);
+        $setPrice = new EqualizableValueSet();
+        $setPrice
+            ->addValue($valueT1Price)
+            ->addValue($valueT2Price);
 
         $raqualizer = new Raqualizer();
-        $result = $raqualizer->processSet($set, $etalonPrice);
+        $result = $raqualizer->processSet($setPrice, $etalonPrice);
 
         $expected = array(
-            array(2974207.15, 0.02),
-            array(993413.85, 0.02)
+            2974207.15,
+            993413.85
         );
 
         foreach ($expected as $i => $expectation) {
-            $this->assertEquals($result[$i], $expectation[0], '', $expectation[1]);
+            $this->assertEquals($expectation, $result[$i], '', 0.02);
+        }
+
+        $setClicks = new EqualizableValueSet();
+        $setClicks
+            ->addValue($valueT1Clicks)
+            ->addValue($valueT2Clicks);
+
+        $setClicks->dependsOn($setPrice);
+
+        $result = $raqualizer->processSet($setClicks, $etalonClicks);
+
+        $expected = array(
+            1609,
+            538
+        );
+
+        foreach ($expected as $i => $expectation) {
+            $this->assertEquals($expectation, $result[$i], '', 0.49);
         }
     }
 }

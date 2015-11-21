@@ -11,6 +11,9 @@ class EqualizableValueSet implements EqualizableValueSetInterface
     /** @var array of EqualizableValueInterface */
     private $values = array();
 
+    /** @var EqualizableValueSetInterface */
+    private $dependsOn;
+
     /**
      * @param EqualizableValueInterface $value
      * @return $this
@@ -50,6 +53,10 @@ class EqualizableValueSet implements EqualizableValueSetInterface
      */
     public function arrangeRatios()
     {
+        if ($this->dependsOn) {
+            return $this->arrangeRatiosFromDependence();
+        }
+
         $originals = array();
 
         /** @var EqualizableValueInterface $value */
@@ -68,6 +75,49 @@ class EqualizableValueSet implements EqualizableValueSetInterface
 
         if (array_sum($ratios) > 1.001) {
             throw new \LogicException('Sum of ratios in the set is greater than 1');
+        }
+
+        return $this;
+    }
+
+    /**
+     * @param EqualizableValueSetInterface $set
+     * @return $this
+     */
+    public function dependsOn(EqualizableValueSetInterface $set)
+    {
+        if ($this->dependsOn !== null) {
+            throw new \LogicException('The set already depends on some another set');
+        }
+
+        $this->validateDependence($set);
+        $this->dependsOn = $set;
+        return $this;
+    }
+
+    /**
+     * @param EqualizableValueSetInterface $set
+     */
+    private function validateDependence(EqualizableValueSetInterface $set)
+    {
+        $selfCount = count($this->getValues());
+        $theirCount = count($set->getValues());
+
+        if ($selfCount !== $theirCount) {
+            throw new \LogicException('Self count '.$selfCount.' does not equal to dependence\'s '.$theirCount);
+        }
+    }
+
+    /**
+     * @return $this
+     */
+    private function arrangeRatiosFromDependence()
+    {
+        $dependenceValues = $this->dependsOn->getValues();
+
+        /** @var EqualizableValueInterface $value */
+        foreach ($dependenceValues as $i => $value) {
+            $this->values[$i]->setRatio($value->getRatio());
         }
 
         return $this;
