@@ -12,7 +12,8 @@
   ],
   "require": {
     "php" : ">=5.3.9",
-    "ext-phpredis": "*"
+    "ext-phpredis": "*",
+    "ext-php5-redis": "*"
   },
   "require-dev": {
     "phpunit/phpunit" : ">=4.5"
