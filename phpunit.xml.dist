@@ -22,6 +22,9 @@
 		<testsuite name="Mufuphlex ReSearcher Test Suite">
 			<directory>src/Mufuphlex/ReSearcher/Tests</directory>
 		</testsuite>
+		<testsuite name="Mufuphlex Raqualizer Test Suite">
+			<directory>src/Mufuphlex/Raqualizer/Tests</directory>
+		</testsuite>
 	</testsuites>
 	<filter>
 		<whitelist>
