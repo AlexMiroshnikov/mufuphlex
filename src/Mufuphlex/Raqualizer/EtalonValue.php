@@ -8,7 +8,7 @@ namespace Mufuphlex\Raqualizer;
  */
 class EtalonValue implements EtalonValueInterface
 {
-    /** @var int */
+    /** @var int|float */
     private $value;
 
     /**
