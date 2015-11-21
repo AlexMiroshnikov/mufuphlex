@@ -73,9 +73,11 @@ class EqualizableValueSet implements EqualizableValueSetInterface
             $ratios[] = $ratio;
         }
 
+        /*
         if (array_sum($ratios) > 1.001) {
             throw new \LogicException('Sum of ratios in the set is greater than 1');
         }
+        //*/
 
         return $this;
     }
