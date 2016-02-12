@@ -41,6 +41,27 @@ class RepositoryDoctrineTest extends PHPUnit_Framework_TestCase
 
     /**
      * @expectedException \LogicException
+     * @expectedExceptionMessage modelClassName can not be reassigned
+     */
+    public function testSetModelClassNameFailsOnReassign()
+    {
+        $repo = new RepositoryDoctrine();
+        $repo->setModelClassName(static::$dummyModelName);
+        $repo->setModelClassName(static::$dummyModelName);
+    }
+
+    /**
+     * @expectedException \LogicException
+     * @expectedExceptionMessage $className must be a string, array given
+     */
+    public function testSetModelClassNameFailsOnNotString()
+    {
+        $repo = new RepositoryDoctrine();
+        $repo->setModelClassName(array());
+    }
+
+    /**
+     * @expectedException \LogicException
      * @expectedExceptionMessage entityManager can not be reassigned
      */
     public function testSetEntityManagerFailsOnRedefine()
@@ -110,6 +131,20 @@ class RepositoryDoctrineTest extends PHPUnit_Framework_TestCase
         $repo->setModelClassName(static::$dummyModelName);
         $model = $repo->findById($id);
         $this->assertNull($model);
+    }
+
+    /**
+     * @expectedException \LogicException
+     * @expectedExceptionMessage modelClassName is not set yet
+     */
+    public function testFindByIdFailsOnNotSetClassName()
+    {
+        $id = 1;
+        $entityManagerMock = Mockery::mock('Doctrine\ORM\EntityManagerInterface');
+        $entityManagerMock->shouldReceive('find')->never();
+        $repo = new RepositoryDoctrine();
+        $repo->setEntityManager($entityManagerMock);
+        $repo->findById($id);
     }
 
     /**
