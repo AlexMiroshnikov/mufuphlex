@@ -14,4 +14,10 @@ interface RepositoryInterface
      * @return mixed
      */
     public function save(ModelPersistentInterface $model);
+
+    /**
+     * @param $id
+     * @return ModelPersistentInterface|null
+     */
+    public function findById($id);
 }

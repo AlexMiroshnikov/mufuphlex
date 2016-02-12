@@ -4,6 +4,8 @@ use Mufuphlex\Persistence\Repositories\RepositoryDoctrine;
 
 class RepositoryDoctrineTest extends PHPUnit_Framework_TestCase
 {
+    private static $dummyModelName = '\Mufuphlex\Persistence\Models\DummyModel';
+
     public function tearDown()
     {
         parent::tearDown();
@@ -14,6 +16,27 @@ class RepositoryDoctrineTest extends PHPUnit_Framework_TestCase
     {
         $repo = static::getRepo();
         $this->assertInstanceOf('Mufuphlex\Persistence\Repositories\RepositoryDoctrine', $repo);
+        $this->assertEquals(static::$dummyModelName, $repo->getModelClassName());
+    }
+
+    /**
+     * @expectedException \InvalidArgumentException
+     * @expectedExceptionMessage Option OPTION_MODEL_CLASS_NAME must be specified
+     */
+    public function testFactoryFailsOnNotPassedClassName()
+    {
+        $options = array();
+        RepositoryDoctrine::factory($options);
+    }
+
+    /**
+     * @expectedException \InvalidArgumentException
+     * @expectedExceptionMessage Class "unexisting Xaba Xaba" does not exist
+     */
+    public function testFactoryFailsOnNonExistingClass()
+    {
+        $options = array(RepositoryDoctrine::OPTION_MODEL_CLASS_NAME => 'unexisting Xaba Xaba');
+        RepositoryDoctrine::factory($options);
     }
 
     /**
@@ -77,6 +100,18 @@ class RepositoryDoctrineTest extends PHPUnit_Framework_TestCase
         $repo->save($model);
     }
 
+    public function testFindByIdNull()
+    {
+        $id = 1;
+        $entityManagerMock = Mockery::mock('Doctrine\ORM\EntityManagerInterface');
+        $entityManagerMock->shouldReceive('find')->withArgs(array(static::$dummyModelName, $id))->once();
+        $repo = new RepositoryDoctrine();
+        $repo->setEntityManager($entityManagerMock);
+        $repo->setModelClassName(static::$dummyModelName);
+        $model = $repo->findById($id);
+        $this->assertNull($model);
+    }
+
     /**
      * @return RepositoryDoctrine
      */
@@ -88,6 +123,7 @@ class RepositoryDoctrineTest extends PHPUnit_Framework_TestCase
                 'driver' => 'pdo_sqlite',
                 'path' => __DIR__ . '/db.sqlite'
             ),
+            RepositoryDoctrine::OPTION_MODEL_CLASS_NAME => static::$dummyModelName
         );
         return RepositoryDoctrine::factory($options);
     }
